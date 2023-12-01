@@ -24,22 +24,20 @@ namespace RL
         public async static Task LoadAudioCourutine(string Path, UnityAction<AudioClip> Clip)
         {
             if (File.Exists(Path)) throw new Exception("Файла, который должен был является музыкой, не существует!");
-            using (UnityWebRequest UWR = UnityWebRequestMultimedia.GetAudioClip(Path, AudioType.UNKNOWN))
-            {
-                var a = UWR.SendWebRequest();
-                while (!a.isDone)
-                    await Task.Yield();
+            using UnityWebRequest UWR = UnityWebRequestMultimedia.GetAudioClip(Path, AudioType.UNKNOWN);
 
-                if (UWR.result == UnityWebRequest.Result.Success)
-                {
-                    AudioClip AC = DownloadHandlerAudioClip.GetContent(UWR);
-                    Debug.Log("Музыка была успешно загружена!");
-                    Clip.Invoke(AC);
-                }
-                else
-                {
-                    throw new Exception("Музыка не-была загружена из-за ошибки: " + UWR.error);
-                }
+            var a = UWR.SendWebRequest();
+            while (!a.isDone) await Task.Yield();
+
+            if (UWR.result == UnityWebRequest.Result.Success)
+            {
+                AudioClip AC = DownloadHandlerAudioClip.GetContent(UWR);
+                Debug.Log("Музыка была успешно загружена!");
+                Clip.Invoke(AC);
+            }
+            else
+            {
+                throw new Exception("Музыка не-была загружена из-за ошибки: " + UWR.error);
             }
         }
     }

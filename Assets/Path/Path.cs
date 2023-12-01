@@ -19,7 +19,6 @@ namespace RL.Paths
         [SerializeField]
         private List<Line> Lines;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         /// <summary>
         /// �������� ������� �� �������
         /// </summary>
@@ -40,15 +39,9 @@ namespace RL.Paths
                 return Lines[0].A.position;
             }
         }
-        /// <summary>
-        /// �������� ������ ���� ����� � ����
-        /// </summary>
-        /// <returns>����� ����</returns>
+
         public Line[] GetLinesArray() => Lines.ToArray();
-        /// <summary>
-        /// �������� ������ ���� ����� ����
-        /// </summary>
-        /// <returns>����� ����</returns>
+
         public Point[] GetPointsArray()
         {
             List<Point> points = new();
@@ -59,16 +52,9 @@ namespace RL.Paths
             points.Add(Lines[^1].B);
             return points.ToArray();
         }
-        /// <summary>
-        /// ���������� ����� � ����
-        /// </summary>
+
         public int Count { get => Lines.Count; }
-        /// <summary>
-        /// �������� ������ ����� A
-        /// </summary>
-        /// <remarks>+1 ��� ��������� ����� B</remarks>
-        /// <param name="time">�����</param>
-        /// <returns>������ ����� A</returns>
+
         public int GetIndex(float time)
         {
             for (int i = 0; i < Lines.Count; i++)
@@ -304,7 +290,7 @@ namespace RL.Paths
                 point.A.time = A.time + H;
                 point.A.position = point1pos;
 
-                H += Maths.GetLength(point1pos,point2pos);
+                H += Vector2.Distance(point1pos, point2pos);
 
                 point.B.time = A.time + H;
                 point.B.position = point2pos;

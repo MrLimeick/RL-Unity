@@ -37,42 +37,21 @@ namespace RL.Game
         }
         public void Start()
         {
-
-            switch (NoteType)
+            void setType((string symbol, float offset) type)
             {
-                case NoteType.Up:
-                    Text.text = "^";
-                    Text.margin = new Vector4(0, 0, 0, 0);
-                    break;
-                case NoteType.Down:
-                    Text.text = "V";
-                    Text.margin = new Vector4(0.2f, 0.2f, 0.2f, 0.2f);
-                    break;
-                case NoteType.Left:
-                    Text.text = "<";
-                    Text.margin = new Vector4(0f, 0f, 0f, 0f);
-                    break;
-                case NoteType.Right:
-                    Text.text = ">";
-                    Text.margin = new Vector4(0f, 0f, 0f, 0f);
-                    break;
-                    /*case NoteType.W:
-                        Text.text = "W";
-                        Text.margin = new Vector4(0.2f, 0.2f, 0.2f, 0.2f);
-                        break;
-                    case NoteType.A:
-                        Text.text = "A";
-                        Text.margin = new Vector4(0.2f, 0.2f, 0.2f, 0.2f);
-                        break;
-                    case NoteType.S:
-                        Text.text = "S";
-                        Text.margin = new Vector4(0.2f, 0.2f, 0.2f, 0.2f);
-                        break;
-                    case NoteType.D:
-                        Text.text = "D";
-                        Text.margin = new Vector4(0.2f, 0.2f, 0.2f, 0.2f);
-                        break;*/
+                Text.text = type.symbol;
+                Text.margin = new Vector4(type.offset, type.offset, type.offset, type.offset);
             }
+
+            setType(NoteType switch
+            {
+                NoteType.Up => ("^", 0),
+                NoteType.Down => ("V", 0.2f),
+                NoteType.Left => ("<", 0f),
+                NoteType.Right => (">", 0f),
+                _ => throw new System.NotImplementedException()
+            });
+
             if (IsSPNote)
             {
                 Graphic.sprite = SP;
@@ -98,12 +77,13 @@ namespace RL.Game
                 Color color3 = Color.HSVToRGB((GradientAngle + 0.56f) % 1, 1, 1);
                 Color color4 = Color.HSVToRGB((GradientAngle + 0.84f) % 1, 1, 1);
 
-                var gradient = new TMPro.VertexGradient();
-
-                gradient.bottomRight = color1;
-                gradient.bottomLeft = color2;
-                gradient.topLeft = color3;
-                gradient.topRight = color4;
+                var gradient = new TMPro.VertexGradient
+                {
+                    bottomRight = color1,
+                    bottomLeft = color2,
+                    topLeft = color3,
+                    topRight = color4
+                };
 
                 Text.colorGradient = gradient;
 
@@ -125,36 +105,14 @@ namespace RL.Game
                     foreach (char Key in Keys.ToCharArray())
                     {
                         if (ScoreCounter.Instance != null) ScoreCounter.Instance.Add(300);
-                        switch (Key)
+                        print(Key switch
                         {
-                            case 'w':
-                                print("Up ^");
-                                break;
-                            case 'a':
-                                print("Left <");
-                                break;
-                            case 's':
-                                print("Down v");
-                                break;
-                            case 'd':
-                                print("Right >");
-                                break;
-                            case 'u':
-                                print("Up ^");
-                                break;
-                            case 'h':
-                                print("Left <");
-                                break;
-                            case 'j':
-                                print("Down v");
-                                break;
-                            case 'k':
-                                print("Right >");
-                                break;
-                            default:
-                                print("other key clicked: " + Key);
-                                break;
-                        }
+                            'w' or 'u' => "Up ^",
+                            'a' or 'h' => "Left <",
+                            's' or 'j' => "Down v",
+                            'd' or 'k' => "Right >",
+                            _ => "other key clicked: " + Key
+                        });
                     }
                 }
                 await Task.Yield();
@@ -168,38 +126,18 @@ namespace RL.Game
         {
             float localTime = UnityEngine.Time.time - SpawnTime - 1;
 
-            if (localTime < -1f)
+            if (localTime < -1f) return;
+
+            const float MISS = 1f, BAD = 0.75f, GOOD = 0.5f, PERFECT = 0.25f;
+
+            ScoreCounter.Instance.Add(localTime switch
             {
-                return;
-            }
-            else if (localTime >= -1f && localTime < -0.75f)
-            {
-                ScoreCounter.Instance.Add(0);
-            }
-            else if(localTime >= -0.75f && localTime < -0.5f)
-            {
-                ScoreCounter.Instance.Add(50);
-            }
-            else if (localTime >= -0.5f && localTime < -0.25f)
-            {
-                ScoreCounter.Instance.Add(100);
-            }
-            else if (localTime >= -0.25f && localTime < 0.25f)
-            {
-                ScoreCounter.Instance.Add(300);
-            }
-            else if (localTime >= 0.25f && localTime < 0.5f)
-            {
-                ScoreCounter.Instance.Add(100);
-            }
-            else if (localTime >= 0.5f && localTime < 0.75f)
-            {
-                ScoreCounter.Instance.Add(50);
-            }
-            else if (localTime >= 0.75f)
-            {
-                ScoreCounter.Instance.Add(0);
-            }
+                (>= -MISS    and < -BAD    ) or (>= BAD               ) => 0,
+                (>= -BAD     and < -GOOD   ) or (>= GOOD    and < BAD ) => 50,
+                (>= -GOOD    and < -PERFECT) or (>= PERFECT and < GOOD) => 100,
+                (>= -PERFECT and <  PERFECT)                            => 300,
+               _ => throw new System.NotImplementedException()
+            });
         }
     }
 }

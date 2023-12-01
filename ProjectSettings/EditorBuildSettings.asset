@@ -21,6 +21,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Game editor pages/Objects board.unity
     guid: 1047015ca2f1ace44b552b0e8cac7f7d
   - enabled: 1
+    path: Assets/Scenes/MainMenu2.unity
+    guid: 5db88669d8ff541ffb3c90d75261840a
+  - enabled: 1
     path: Assets/Scenes/Game editor pages/Path maker.unity
     guid: 5365b10baf46e884485cb5a60d94d8f2
   m_configObjects:

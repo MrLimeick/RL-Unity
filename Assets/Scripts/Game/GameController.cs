@@ -14,7 +14,7 @@ namespace RL.Game
 {
     internal class GameController : MonoBehaviour
     {
-        public static RLM map;
+        public static Card map;
         public PathBuilder PathBuilder;
         public Player Player;
 
@@ -47,7 +47,7 @@ namespace RL.Game
                             )
                 };
 
-                map = new RLM()
+                map = new Card()
                 {
                     Name = "Test",
                     Artits = "Artist?",

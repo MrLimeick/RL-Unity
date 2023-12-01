@@ -1,5 +1,5 @@
 using RL;
-using RL.GameEditor;
+using RL.CardEditor;
 using RL.UI;
 using Game = RL.Game.GameController;
 using Image = UnityEngine.UI.Image;
@@ -12,7 +12,7 @@ public class MapListButton : UnityEngine.MonoBehaviour
     public Text ArtistName;
 
     public Button Play, Edit;
-    public RLM map;
+    public Card map;
 
     public void Awake()
     {

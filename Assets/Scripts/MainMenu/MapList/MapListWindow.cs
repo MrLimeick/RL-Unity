@@ -65,14 +65,14 @@ namespace RL.MainMenu.MapList
         public List<Sprite> Images = new();*/
         public async void UpdateMapList()
         {
-            List<RLM> rlms = new(); 
+            List<Card> rlms = new(); 
             foreach(DirectoryInfo DI in CreatedMapsDirectory.GetDirectories())
             {
                 foreach(FileInfo FI in DI.GetFiles())
                 {
                     if(FI.Extension == ".RLM")
                     {
-                        rlms.Add(JsonUtility.FromJson<RLM>(File.ReadAllText(FI.FullName)));
+                        rlms.Add(JsonUtility.FromJson<Card>(File.ReadAllText(FI.FullName)));
                     }
                 }
             }
@@ -83,7 +83,7 @@ namespace RL.MainMenu.MapList
 
             var Padding = ButtonRT.anchoredPosition;
 
-            List<RLM> ClearingRlms = new();
+            List<Card> ClearingRlms = new();
 
             for (int i = 0; i < rlms.Count; i++)
             {

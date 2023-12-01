@@ -80,7 +80,6 @@ namespace RL.MainMenu
 
             print("��������� ��������� � " + AppDomain.CurrentDomain.BaseDirectory);
             print("Env " + Environment.CurrentDirectory);
-            VersionText.text = GameVersion;
             if (NowStarted)
             {
                 /*StartAnimation();*/

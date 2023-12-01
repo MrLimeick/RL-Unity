@@ -14,21 +14,6 @@ namespace RL
     /// </summary>
     public class RLScript : MonoBehaviour
     {
-        /// <summary>
-        /// Возращает запущенную версию игры
-        /// </summary>
-        public static string GameVersion { get => Application.version; }
-        /// <summary>
-        /// Игровой курсор
-        /// </summary>
-        public static Cursor Cursor;
-        public static string m_Username = "Username";
-        /// <summary>
-        /// Ник игрока
-        /// </summary>
-        public static string Username { get => m_Username; set => m_Username = value; }
-
-
 #if !UNITY_EDITOR
         /// <summary>
         /// Папка где находится exe файл с игрой
@@ -38,23 +23,23 @@ namespace RL
         /// <summary>
         /// Папка где находится exe файл с игрой
         /// </summary>
-        public static DirectoryInfo GameDirectory = new DirectoryInfo(Environment.CurrentDirectory);
+        public static DirectoryInfo GameDirectory = new(Environment.CurrentDirectory);
 #endif
         /// <summary>
         /// Папка где находятся все созданные карты игрока
         /// </summary>
         /// <remarks>По умолчанию - Rhythm Lines/Created maps</remarks>
-        public static DirectoryInfo CreatedMapsDirectory = new DirectoryInfo(GameDirectory.FullName + "/Created maps");
+        public static DirectoryInfo CreatedMapsDirectory = new(GameDirectory.FullName + "/Created maps");
         /// <summary>
         /// Папка где находятся все карты 
         /// </summary>
         /// <remarks>По умолчанию - Rhythm Lines/Maps</remarks>
-        public static DirectoryInfo MapsDirectory = new DirectoryInfo(GameDirectory.FullName + "/Maps");
+        public static DirectoryInfo MapsDirectory = new(GameDirectory.FullName + "/Maps");
         /// <summary>
         /// Папка где находятся все скины 
         /// </summary>
         /// <remarks>По умолчанию - Rhythm Lines/Skins</remarks>
-        public static DirectoryInfo SkinsDirectory = new DirectoryInfo(GameDirectory.FullName + "/Skins");
+        public static DirectoryInfo SkinsDirectory = new(GameDirectory.FullName + "/Skins");
 
 
     }
