@@ -1,24 +1,35 @@
 ﻿using System.Collections;
 using Unity.Burst.Intrinsics;
 using UnityEngine;
+using UnityEngine.Events;
 using static RL.CardEditor.PathMaker;
 
 namespace RL.CardEditor
 {
+    [AddComponentMenu("RL/Card Editor/Curve Point")]
     [RequireComponent(typeof(CircleCollider2D), typeof(SpriteRenderer))]
     public class CardEditorCurvePoint : MonoBehaviour
     {
+        public UnityAction<Vector2> OnMoved;
+
         public Vector2 Position
         {
-            get => transform.position;
+            get => transform.localPosition;
             set
             {
-                transform.position = value;
-                Line.Sync();
+                if (value == (Vector2)transform.localPosition) return;
+
+                transform.localPosition = value;
+                OnMoved?.Invoke(value * (IsMirrored ? -1 : 1));
+                Point.UpdateLine();
             }
         }
 
-        public CardEditorLine Line;
+        public CardEditorPoint Point;
+        //CardEditorPath Path => Point.Path;
+
+        public bool IsMirrored = false;
+        [SerializeField] private CardEditorCurvePoint MirroredCurvePoint;
 
         private CircleCollider2D Collider;
         private SpriteRenderer Renderer;
@@ -30,29 +41,31 @@ namespace RL.CardEditor
         }
 
         public void Start()
-        {
-            OnModeChanged += CardEditorCurvePoint_OnModeChanged;
-        }
+            => OnModeChanged += CardEditorCurvePoint_OnModeChanged;
 
         private void OnDestroy()
-        {
-            OnModeChanged -= CardEditorCurvePoint_OnModeChanged;
-        }
+            => OnModeChanged -= CardEditorCurvePoint_OnModeChanged;
 
         private void CardEditorCurvePoint_OnModeChanged(Modes arg0)
-            => Collider.enabled = Renderer.enabled = arg0 == Modes.EditingCurvesPoints;
+            => Collider.enabled = Renderer.enabled = arg0 == Modes.EditingControlPoints;
 
         private void OnMouseDrag()
         {
             static float round(float num, float num2) => Mathf.Round(num / num2) * num2;
+            static Vector2 roundVec(Vector2 vec, Vector2 vec2)
+                => new(round(vec.x, vec2.x), round(vec.y, vec2.y));
 
-            var MousePos = (Vector2)PathMaker.Camera.ScreenToWorldPoint(Input.mousePosition);
-            Position = new(
-                round(MousePos.x, OnEditingCurveGridResolution.x),
-                round(MousePos.y, OnEditingCurveGridResolution.y));
+            Vector2
+                grid = OnEditingCurveGridResolution,
+                scale = new(0.25f, 0.25f), // transform.lossyScale didn't work :( he send or 0.25f or 0.3f randomaly
+                mousePos = (MousePos - (Vector2)Point.transform.position) / scale,
+                position = roundVec(mousePos, grid / scale);
+
+            MirroredCurvePoint.transform.localPosition = position * -1;
+            Position = position;
         }
 
-        public void OnMouseEnter() => transform.localScale = new Vector2(0.5f, 0.5f);
-        public void OnMouseExit() => transform.localScale = new Vector2(0.35f, 0.35f);
+        public void OnMouseEnter() => transform.localScale = new Vector2(1.2f, 1.2f);
+        public void OnMouseExit() => transform.localScale = new Vector2(1f, 1f);
     }
 }

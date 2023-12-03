@@ -9,35 +9,58 @@ using UnityEngine.UI;
 public class SceneLoader : MonoBehaviour
 {
     public static SceneLoader Instance { get; private set; }
-    public Image Background,Logo;
-    public TMPro.TMP_Text Text;
-    public RectTransform Graphic;
 
-    public void Awake()
+    [SerializeField] private TMPro.TMP_Text m_Text;
+    public static string Text
     {
-        Instance = this;
-
-        DontDestroyOnLoad(gameObject);
+        get => Instance.m_Text.text;
+        set => Instance.m_Text.text = value;
     }
 
-    public async static Task LoadSceneAsync(string sceneName)
-        => await Instance.LoadScene(sceneName);
-
-    public async Task LoadScene(string sceneName)
+    public static bool IsActive
     {
-        Background.GetComponent<GraphicRaycaster>().enabled = true;
+        get => Instance.gameObject.activeSelf;
+        set => Instance.gameObject.SetActive(value);
+    }
 
-        /*Graphic.SizeAnim(new Vector2(350, 0), 0.25f);
-        await Background.ColorAnimAsync(new Color(0, 0, 0, 1), 0.25f);*/
+    [RuntimeInitializeOnLoadMethod]
+    static void Init()
+    {
+        var prefab = Resources.Load<GameObject>("Prefabs/SceneLoader");
+        Instantiate(prefab);
+    }
 
-        var Scene = SceneManager.LoadSceneAsync(sceneName);
-        while (!Scene.isDone) await Task.Yield();
-        await Task.Delay(100);
+    void Awake()
+    {
+        if(Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
 
-        /*Graphic.SizeAnim(new Vector2(0, 0), 0.25f);
-        await Background.ColorAnimAsync(new Color(0, 0, 0, 0), 0.25f);*/
+        gameObject.hideFlags = HideFlags.HideAndDontSave;
+        DontDestroyOnLoad(gameObject);
+        gameObject.SetActive(false);
+    }
 
-        Background.GetComponent<GraphicRaycaster>().enabled = false;
-        Destroy(this.gameObject);
+    public static void LoadScene(int buildIndex)
+        => LoadSceneInternal(() => SceneManager.LoadSceneAsync(buildIndex));
+
+    public static void LoadScene(string sceneName)
+        => LoadSceneInternal(() => SceneManager.LoadSceneAsync(sceneName));
+
+    private static async void LoadSceneInternal(Func<AsyncOperation> loadScene)
+    {
+        IsActive = true;
+
+        var scene = loadScene();
+        while (!scene.isDone)
+        {
+            Text = $"Loading… {Mathf.Round(scene.progress * 100)}";
+            await Task.Yield();
+        }
+
+        IsActive = false;
     }
 }

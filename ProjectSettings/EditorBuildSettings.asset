@@ -5,26 +5,11 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/NowRunned.unity
-    guid: a86c8fe0ea988224ab6698eb03ffa7c2
-  - enabled: 0
-    path: Assets/Scenes/MainMenu.unity
-    guid: 438fd8f9046a1164ba16adb6ef544cf4
-  - enabled: 0
-    path: Assets/Scenes/GameEditor.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
-  - enabled: 0
-    path: Assets/Scenes/Game.unity
-    guid: 33bbe506b5357524a87fb41aa72175a5
-  - enabled: 0
-    path: Assets/Scenes/Game editor pages/Objects board.unity
-    guid: 1047015ca2f1ace44b552b0e8cac7f7d
   - enabled: 1
-    path: Assets/Scenes/MainMenu2.unity
+    path: Assets/Scenes/MainMenuAlpha.unity
     guid: 5db88669d8ff541ffb3c90d75261840a
   - enabled: 1
-    path: Assets/Scenes/Game editor pages/Path maker.unity
+    path: Assets/Scenes/Card Editor.unity
     guid: 5365b10baf46e884485cb5a60d94d8f2
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 5c8ce6ed088bc5c46ae0852820e1ddf3, type: 2}

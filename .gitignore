@@ -1,6 +1,5 @@
 .DS_Store
 /Library
-/Created maps
 /Gravit files
 /Logs
 /obj
@@ -11,3 +10,7 @@
 /RL.app
 /.vs
 /Build
+
+# Rhythm Paths folders
+/Created maps
+/Screenshots

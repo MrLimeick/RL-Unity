@@ -8,7 +8,7 @@
             None,
             EditingPath,
             BuildsPath,
-            EditingCurvesPoints,
+            EditingControlPoints,
         }
 
         [System.Serializable]

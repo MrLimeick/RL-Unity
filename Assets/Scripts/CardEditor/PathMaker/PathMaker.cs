@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using RL.Paths;
 using RL.UI;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 
 namespace RL.CardEditor
 {
@@ -53,7 +53,6 @@ namespace RL.CardEditor
 
         [Header("Prefabs")]
         [SerializeField] private CardEditorPoint PointPrefab;
-        [SerializeField] private CardEditorLine LinePrefab;
 
         #region Preview
         [Header("Preview")]
@@ -180,7 +179,7 @@ namespace RL.CardEditor
         [SerializeField] private EditorViewport Viewport;
         [SerializeField] private CameraController MainCameraController;
 
-        private static bool InViewport;
+        private static bool InViewport => EditorViewport.IsStay;
 
         public void Awake()
         {
@@ -203,36 +202,34 @@ namespace RL.CardEditor
             });
             EditingCurvesButton.OnClick.AddListener(() =>
             {
-                Mode = Modes.EditingCurvesPoints;
+                Mode = Modes.EditingControlPoints;
             });
 
             Load(null);
 
             #region Viewport events
 
-            Viewport.OnLeftClick.AddListener((arg) =>
+            Viewport.OnLeftClick.AddListener((_) =>
             {
                 if (Mode == Modes.BuildsPath)
                     SelectedPath.CreatePoint(SelectedPath[^1].Time + Preview.Lenght, Preview.EndPoint);
             }); // При нажатии левой клавишой мышки по Editor Viewport создавать новый точку и линию
-            Viewport.OnStay.AddListener((arg) =>
+            Viewport.OnStay.AddListener((_) =>
             {
                 PreviewLine.transform.position = Preview.Position;
                 PreviewLine.transform.localScale = new Vector3(Preview.Lenght, Preview.Thickness, 0);
                 PreviewLine.transform.rotation = Quaternion.Euler(0, 0, Preview.Angle);
                 PreviewPoint.transform.position = Preview.EndPoint;
             }); // Если находится в EditorViewport
-            Viewport.OnEnter.AddListener((arg) =>
+            Viewport.OnEnter.AddListener((_) =>
             {
-                InViewport = true;
                 IsPreviewEnabled = true;
 
                 MainCameraController.CanMove = true;
                 MainCameraController.CanScroll = true;
             }); // Если вошёл в viewport
-            Viewport.OnExit.AddListener((arg) =>
+            Viewport.OnExit.AddListener((_) =>
             {
-                InViewport = false;
                 IsPreviewEnabled = false;
 
                 MainCameraController.CanMove = false;
@@ -260,19 +257,19 @@ namespace RL.CardEditor
 
             if (Input.GetKeyDown(KeyCode.Alpha1)) Mode = Modes.EditingPath;
             if (Input.GetKeyDown(KeyCode.Alpha2)) Mode = Modes.BuildsPath;
-            if (Input.GetKeyDown(KeyCode.Alpha3)) Mode = Modes.EditingCurvesPoints;
+            if (Input.GetKeyDown(KeyCode.Alpha3)) Mode = Modes.EditingControlPoints;
             #endregion
         }
 
         public async void Close()
         {
-            var ans = await Dialog.ShowDialog("Выйти?", "Вы действительно хотите выйти?");
+            var ans = await Dialog.ShowQuestion("Quit?", "Are you sure you want to exit the card editor?");
             if (ans)
             {
                 OnModeChanged = (_) => { };
                 OnSelectedPointChanged = (_) => { };
 
-                SceneManager.LoadScene("MainMenu2");
+                SceneLoader.LoadScene(0);
             }
         }
 
@@ -288,62 +285,17 @@ namespace RL.CardEditor
             CardEditorPath createPath(int num)
             {
                 var path = new GameObject($"Path {num}").AddComponent<CardEditorPath>();
-                path.LinePrefab = LinePrefab; // Ставим префаб линии
                 path.PointPrefab = PointPrefab; // Ставим префаб точки
 
                 return path;
             }
 
-            if (paths == null || paths.Length == 0)
-            {
-                // Создаём новый путь
-                var path = createPath(0);
-                path.CreatePoint(0, new Vector2(0, 0)); // Создаём первую точку
+            // Создаём новый путь
+            var path = createPath(0);
+            path.CreatePoint(0, new Vector2(0, 0)); // Создаём первую точку
 
-                Paths.Add(path);
-                SelectedPath = Paths[0];
-            }
-            else
-            {
-                try
-                {
-                    int num = 0;
-                    foreach (var savedPath in paths)
-                    {
-                        var path = createPath(num++);
-                        path.LoadPath(savedPath);
-
-                        path.Sync();
-                        Paths.Add(path);
-                    }
-                    SelectedPath = Paths[^1];
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("Не удалось загрузить путь", e);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Создать сохранение для всех путей
-        /// </summary>
-        /// <returns></returns>
-        public Paths.Path[] Save()
-        {
-            try
-            {
-                List<Paths.Path> paths = new();
-                foreach (var path in Paths)
-                {
-                    paths.Add(path.GetPath());
-                }
-                return paths.ToArray();
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Не удалось сохранить пути", e);
-            }
+            Paths.Add(path);
+            SelectedPath = Paths[0];
         }
         #endregion
     }

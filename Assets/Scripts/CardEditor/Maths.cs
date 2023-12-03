@@ -49,6 +49,19 @@ namespace RL.Math
                 x: getCurve(point1.x, point2.x, point3.x),
                 y: getCurve(point1.y, point2.y, point3.y));
         }
+
+        public static Vector2 GetCurveBy4Point(Vector2 point1, Vector2 controlPoint1, Vector2 controlPoint2, Vector2 point2, float t)
+        {
+            float a = 1f - t;
+            float getCurve(float p1, float p2, float p3, float p4)
+                => (a * a * a * p1)
+                + (3 * Mathf.Pow(a, 2) * t * p2)
+                + (3 * a * t * t * p3)
+                + (t * t * t * p4);
+            return new(
+                x: getCurve(point1.x, controlPoint1.x, controlPoint2.x, point2.x),
+                y: getCurve(point1.y, controlPoint1.y, controlPoint2.y, point2.y));
+        }
     }
     public static class TransformExtension
     {
