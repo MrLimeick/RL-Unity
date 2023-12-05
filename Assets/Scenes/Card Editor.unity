@@ -1837,8 +1837,8 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1467453397}
-        m_TargetAssemblyTypeName: RL.CardEditor.PathMaker, Assembly-CSharp
+      - m_Target: {fileID: 1787411732}
+        m_TargetAssemblyTypeName: Menu, Assembly-CSharp
         m_MethodName: SetUseTrackpad
         m_Mode: 0
         m_Arguments:
@@ -3422,7 +3422,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 241028192}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.6315791
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -5011,7 +5011,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1216068510
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5272,7 +5272,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1288912958
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6069,7 +6069,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1443005023
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7038,7 +7038,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1570783592
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8395,6 +8395,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NotifyText: {fileID: 448474286}
+  CameraController: {fileID: 1495130743}
+  UseTrackpadToggle: {fileID: 378201228}
 --- !u!1 &1795026803
 GameObject:
   m_ObjectHideFlags: 0
@@ -8633,7 +8635,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1869213738
 RectTransform:
   m_ObjectHideFlags: 0

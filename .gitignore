@@ -1,15 +1,20 @@
 .DS_Store
-/Library
 /Gravit files
-/Logs
-/obj
 /OldMainMenuBuild
 /Rhythm Lines_BurstDebugInformation_DoNotShip
 /RL_BurstDebugInformation_DoNotShip
-/Temp
 /RL.app
-/.vs
 /Build
+
+# Visual studio
+/obj
+/.vs
+
+# Unity
+/Library
+/Logs
+/Temp
+/UserSettings
 
 # Rhythm Paths folders
 /Created maps

@@ -1,34 +1,53 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System;
+using UnityEngine.UI;
+using RL.CardEditor;
 
 public class Menu : MonoBehaviour
 {
-	private static Menu Instance;
+    private const string USE_TRACKPAD_KEY = "CardEditor_UseTrackpad";
+
+    protected static Menu Instance;
 	private long CardEditorEnterTime;
 
     private void Awake()
     {
-        if(Instance != null)
-		{
-			Destroy(gameObject);
-			return;
-		}
-
-		Instance = this;
+        Instance = this;
+		//if (!this.SetInstance(ref Instance)) return;
     }
 
 	[SerializeField] private TMPro.TMP_Text NotifyText;
 
-	public static bool IsShow { get; private set; } = false;
+	[SerializeField] private CameraController CameraController;
+	[SerializeField] private Toggle UseTrackpadToggle;
+
+    public static bool IsShow { get; private set; } = false;
 
 	public void SetIsShow(bool value) => IsShow = value;
 
-    // Use this for initialization
+    public static bool UseTrackpad
+    {
+        get => Instance.CameraController.IsTrackpad;
+        set
+        {
+            if (UseTrackpad == value) return;
+
+            Instance.UseTrackpadToggle.SetIsOnWithoutNotify(value);
+            Instance.CameraController.IsTrackpad = value;
+            PlayerPrefs.SetInt(USE_TRACKPAD_KEY, value ? 1 : 0);
+        }
+    }
+
+    public void SetUseTrackpad(bool value) => UseTrackpad = value;
+
     void Start()
 	{
 		CardEditorEnterTime = DateTime.Now.Ticks;
-	}
+
+		if (PlayerPrefs.HasKey(USE_TRACKPAD_KEY))
+            UseTrackpad = PlayerPrefs.GetInt(USE_TRACKPAD_KEY) == 1;
+    }
 
 	// Update is called once per frame
 	void Update()

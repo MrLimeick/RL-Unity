@@ -282,22 +282,6 @@ namespace RL.CardEditor
 
         private static bool InViewport => EditorViewport.IsStay;
 
-        private const string USE_TRACHPAD_KEY = "CardEditor_UseTrackpad";
-
-        public static bool UseTrackpad
-        {
-            get => Instance.MainCameraController.IsTrackpad;
-            set
-            {
-                if (UseTrackpad == value) return;
-
-                Instance.MainCameraController.IsTrackpad = value;
-                PlayerPrefs.SetInt(USE_TRACHPAD_KEY, value ? 1 : 0);
-            }
-        }
-
-        public void SetUseTrackpad(bool value) => UseTrackpad = value;
-
         public void SetGameSpeed(string value)
         {
             value.Replace('%', ' ');
@@ -316,8 +300,7 @@ namespace RL.CardEditor
             if (Instance != null) Destroy(Instance.gameObject);
             Instance = this;
 
-            if (PlayerPrefs.HasKey(USE_TRACHPAD_KEY))
-                MainCameraController.IsTrackpad = PlayerPrefs.GetInt(USE_TRACHPAD_KEY) == 1;
+            
 
             #region Tools buttons
             EditingPathButton.OnClick.AddListener(() =>
