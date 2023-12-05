@@ -123,11 +123,18 @@ namespace RL.CardEditor
             //Если где-то в пути
             else
             {
-                bool res = Points.Remove(point); // удаляем точку из пути
-            
+                var index = Points.IndexOf(point);
+                Points.RemoveAt(index); // удаляем точку из пути
+                
                 Destroy(point.gameObject); // Удаляем точку полностью
 
-                return res;
+                for (int i = index; i < Count; i++)
+                    Points[i].Index = i;
+
+                for (int i = index; i < Count; i++)
+                    Points[i].UpdateLine();
+
+                return true;
             }
 
             return false;
@@ -135,17 +142,99 @@ namespace RL.CardEditor
 
         private CardEditorPoint SpawnPoint(float Time, Vector2 Position)
         {
-            CardEditorPoint PB = Instantiate(PointPrefab, Position, Quaternion.identity);
+            CardEditorPoint PB = Instantiate(PointPrefab, Position, Quaternion.identity, transform);
             PB.Time = Time;
             PB.Path = this;
             return PB;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="time"></param>
+        /// <returns>
+        /// Position on path by time.
+        /// <para>if <c>null</c>, the time is greater than the time of the last point.</para>
+        /// </returns>
+        public Vector2? GetPosition(float time)
+        {
+            CardEditorPoint current = Points[0];
+            int count = Points.Count;
+
+            for (int i = 1; i < count; i++)
+            {
+                CardEditorPoint next = Points[i];
+
+                if (current.Time <= time && next.Time > time)
+                {
+                    Point[] parts = next.LinePoints;
+                    int partsCount = parts.Length;
+                    Point currentPart = parts[0];
+
+                    for(int j = 1; j < partsCount; j++)
+                    {
+                        Point nextPart = parts[j];
+
+                        float currentPartTime = current.Time + currentPart.time;
+                        float nextPartTime = current.Time + nextPart.time;
+
+                        if (currentPartTime <= time && nextPartTime > time)
+                        {
+                            float t = (time - currentPartTime) / (nextPartTime - currentPartTime);
+                            return Vector2.Lerp(currentPart.position, nextPart.position, t);
+                        }
+
+                        currentPart = nextPart;
+                    }
+                }
+
+                current = next;
+            }
+                
+            return null;
+        }
+
+        public IEnumerable<Vector2> GetPositions(Func<float> getTime)
+        {
+            CardEditorPoint current = Points[0];
+            int count = Points.Count;
+            float time = 0;
+
+            for (int i = 1; i < count; i++)
+            {
+                CardEditorPoint next = Points[i];
+
+                while (next.Time > time)
+                {
+                    Point[] parts = next.LinePoints;
+                    int partsCount = parts.Length;
+                    Point currentPart = parts[0];
+
+                    for (int j = 1; j < partsCount; j++)
+                    {
+                        Point nextPart = parts[j];
+
+                        float currentPartTime = current.Time + currentPart.time;
+                        float nextPartTime = current.Time + nextPart.time;
+
+                        while (nextPartTime > (time = getTime()))
+                        {
+                            float t = (time - currentPartTime) / (nextPartTime - currentPartTime);
+                            yield return Vector2.Lerp(currentPart.position, nextPart.position, t);
+                        }
+
+                        currentPart = nextPart;
+                    }
+                }
+
+                current = next;
+            }
+        }
+
         public void Clear()
         {
-            List<CardEditorPoint> list = Points;
+            for (int i = 0; i < Points.Count; i++) RemovePoint(Points[i]);
             Points.Clear();
-            for (int i = 0; i < list.Count; i++) RemovePoint(list[i]);
         }
     }
 }

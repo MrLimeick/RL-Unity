@@ -13,6 +13,7 @@ namespace RL.Paths
         public Less2Exeption(string Message) : base(Message) { }
         public Less2Exeption() : base("���������� ����� � ���� ����� 2") { }
     }
+
     [Serializable]
     public class Path
     {
@@ -121,8 +122,8 @@ namespace RL.Paths
 
         public static implicit operator Vector2(Point a) => a.position;
         public static implicit operator float(Point a) => a.time;
-
     }
+
     [Serializable]
     public struct Line
     {

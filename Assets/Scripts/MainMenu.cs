@@ -33,6 +33,16 @@ public class MainMenu : MonoBehaviour
         SceneLoader.LoadScene(1);
     }
 
+    public async void OpenSettings()
+    {
+        await Dialog.ShowNotify("Soon!", "See next releases!");
+    }
+
+    public async void OpenCards()
+    {
+        await  Dialog.ShowNotify("Soon!", "See next releases!");
+    }
+
     public async void Close()
     {
         bool ans = await Dialog.ShowQuestion("Quit?", "Are you sure to quit?");

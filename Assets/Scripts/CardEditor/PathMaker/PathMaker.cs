@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using RL.Game;
 using RL.Paths;
 using RL.UI;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace RL.CardEditor
 {
@@ -15,6 +17,9 @@ namespace RL.CardEditor
 
         [SerializeField] private Camera m_Camera;
         public static Camera Camera => Instance.m_Camera;
+
+        [SerializeField] private Player Player;
+        [SerializeField] private EventSystem EventSystem;
 
         public static Vector2 MousePos => Camera.ScreenToWorldPoint(Input.mousePosition);
 
@@ -181,10 +186,42 @@ namespace RL.CardEditor
 
         private static bool InViewport => EditorViewport.IsStay;
 
+        private const string USE_TRACHPAD_KEY = "CardEditor_UseTrackpad";
+
+        public static bool UseTrackpad
+        {
+            get => Instance.MainCameraController.IsTrackpad;
+            set
+            {
+                if (UseTrackpad == value) return;
+
+                Instance.MainCameraController.IsTrackpad = value;
+                PlayerPrefs.SetInt(USE_TRACHPAD_KEY, value ? 1 : 0);
+            }
+        }
+
+        public void SetUseTrackpad(bool value) => UseTrackpad = value;
+
+        public void SetGameSpeed(string value)
+        {
+            value.Replace('%', ' ');
+            value.Trim();
+
+            if (int.TryParse(value, out int res))
+            {
+                Time.timeScale = res / 100;
+                Debug.Log("Time set successful.");
+            }
+            else Debug.LogError("value is NaN.");
+        }
+
         public void Awake()
         {
             if (Instance != null) Destroy(Instance.gameObject);
             Instance = this;
+
+            if (PlayerPrefs.HasKey(USE_TRACHPAD_KEY))
+                MainCameraController.IsTrackpad = PlayerPrefs.GetInt(USE_TRACHPAD_KEY) == 1;
 
             EditingPathButton.OnClick.AddListener(() =>
             {
@@ -206,6 +243,8 @@ namespace RL.CardEditor
             });
 
             Load(null);
+
+            Player.Path = Paths[0];
 
             #region Viewport events
 
@@ -247,17 +286,31 @@ namespace RL.CardEditor
         /// </summary>
         public List<CardEditorPath> Paths = new();
 
+        private bool InPreview => Player.Moved;
+
         public void Update()
         {
             #region Hotkeys
+            if (EventSystem.currentSelectedGameObject != null) return;
+
             //if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.S)) Save();
             //if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L)) Load();
-            if (Input.GetKeyDown(KeyCode.Delete) && SelectedPoint != null) SelectedPath.RemovePoint(SelectedPoint);
+
+            if ((Input.GetKeyDown(KeyCode.Delete) || Input.GetKeyDown(KeyCode.Backspace)) && SelectedPoint != null) SelectedPath.RemovePoint(SelectedPoint);
             if (Input.GetKeyDown(KeyCode.R) && SelectedPath.Count > 1) SelectedPath.RemovePoint(SelectedPath[^1]);
 
-            if (Input.GetKeyDown(KeyCode.Alpha1)) Mode = Modes.EditingPath;
-            if (Input.GetKeyDown(KeyCode.Alpha2)) Mode = Modes.BuildsPath;
-            if (Input.GetKeyDown(KeyCode.Alpha3)) Mode = Modes.EditingControlPoints;
+            if (Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.LeftControl))
+            {
+                if (Input.GetKeyDown(KeyCode.Alpha1)) Mode = Modes.EditingPath;
+                if (Input.GetKeyDown(KeyCode.Alpha2)) Mode = Modes.BuildsPath;
+                if (Input.GetKeyDown(KeyCode.Alpha3)) Mode = Modes.EditingControlPoints;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Space)) // Enter to preview mode
+            {
+                if (InPreview) Player.Stop();
+                else Player.Move();
+            }
             #endregion
         }
 

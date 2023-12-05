@@ -90,7 +90,8 @@ public class Dialog : MonoBehaviour
 
         while (!pressed)
         {
-            if (!Application.isPlaying) pressed = true;
+            if (!Application.isPlaying || Input.GetKeyDown(KeyCode.Escape))
+                pressed = true;
             await Task.Yield();
         }
 
