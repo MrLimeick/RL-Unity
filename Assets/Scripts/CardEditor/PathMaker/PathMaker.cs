@@ -5,6 +5,7 @@ using System.Linq;
 using RL.Game;
 using RL.Paths;
 using RL.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -21,7 +22,7 @@ namespace RL.CardEditor
         [SerializeField] private Player Player;
         [SerializeField] private EventSystem EventSystem;
 
-        public static Vector2 MousePos => Camera.ScreenToWorldPoint(Input.mousePosition);
+        public static Vector2 MousePos => Instance.m_Camera.ScreenToWorldPoint(Input.mousePosition);
 
         [Header("Tools Buttons")]
         public Button EditingPathButton;
@@ -29,32 +30,127 @@ namespace RL.CardEditor
         public Button BuildPathWithLockedLenghtButton;
         public Button EditingCurvesButton;
 
-        public static event UnityAction<CardEditorPoint> OnSelectedPointChanged;
         public static event UnityAction<Modes> OnModeChanged;
 
-        private CardEditorPoint m_SelectedPoint = null;
-        public static CardEditorPoint SelectedPoint
+        public class SelectedPointsList
         {
-            get => Instance.m_SelectedPoint;
-            set
-            {
-                if (SelectedPoint != null) SelectedPoint.OnDeSelect.Invoke();
-                Instance.m_SelectedPoint = value;
-                if (SelectedPoint != null) SelectedPoint.OnSelect.Invoke();
+            private readonly List<CardEditorPoint> Points = new();
 
-                OnSelectedPointChanged?.Invoke(SelectedPoint);
+            public CardEditorPoint this[int index] => Points[index];
+
+            public void Select(CardEditorPoint point)
+            {
+                Points.Add(point);
+                point.OnPointSelect();
+            }
+
+            public void UnSelect(CardEditorPoint point)
+            {
+                if (Points.Remove(point)) point.OnPointUnSelect();
+            }
+
+            public void RemoveAll()
+            {
+                for (int i = 0; i < Points.Count; i++) SelectedPath.RemovePoint(Points[i]);
+
+                Points.Clear();
+            }
+
+            public void UnSelectAll()
+            {
+                Points.ForEach((p) => p.OnPointUnSelect());
+                Points.Clear();
+            }
+
+            public void MoveAll(Vector2 vector)
+            {
+                Points.ForEach((p) => p.Position += vector);
             }
         }
 
-        private CardEditorPath m_SelectedPath = null;
+        private SelectedPointsList m_SelectedPoints = null;
+        public static SelectedPointsList SelectedPoints = new();
+
+        #region Paths
+
+        private static CardEditorPath m_SelectedPath = null;
         public static CardEditorPath SelectedPath
         {
-            get => Instance.m_SelectedPath;
+            get => m_SelectedPath;
             set
             {
-                Instance.m_SelectedPath = value;
+                if(SelectedPath != null) SelectedPath.gameObject.SetActive(false);
+
+                m_SelectedPath = value;
+                SelectedPath.gameObject.SetActive(true);
+
+                Instance.PathsDropdown.SetValueWithoutNotify(Instance.Paths.IndexOf(value));
+                Player.Path = SelectedPath;
             }
         }
+
+        [SerializeField] private TMP_Dropdown PathsDropdown;
+
+        public void ChangePath(int index) => SelectedPath = Paths[index];
+
+        private int lastCreatedPathIndex = 0;
+
+        public void CreatePathButton()
+        {
+            CreatePath();
+
+            PathsDropdown.Hide();
+        }
+
+        public CardEditorPath CreatePath()
+        {
+            var pathName = $"Path {lastCreatedPathIndex++}";
+
+            var path = new GameObject(pathName).AddComponent<CardEditorPath>();
+            path.PointPrefab = PointPrefab; // Ставим префаб точки
+            path.CreatePoint(0, new(0, 0)); // Создаём первую точку
+            path.gameObject.SetActive(false);
+
+            Paths.Add(path);
+            PathsDropdown.options.Add(new(pathName));
+
+            Debug.Log($"Создан путь {pathName}");
+            return path;
+        }
+
+        public async void DeletePathButton()
+        {
+            bool ans = await Dialog.ShowQuestion("Remove path?", "You realy want delete this path?");
+            if (ans) DeletePath();
+
+            PathsDropdown.Hide();
+        }
+        public void DeletePath()
+        {
+            Debug.Log($"Удалён путь {SelectedPath.name}");
+
+            Paths.Remove(SelectedPath);
+            Destroy(SelectedPath.gameObject);
+
+            SelectedPath = Paths[^1];
+
+            UpdatePathsDropdownNames();
+            PathsDropdown.SetValueWithoutNotify(Paths.Count - 1);
+        }
+
+        private void UpdatePathsDropdownNames()
+        {
+            PathsDropdown.ClearOptions();
+
+            TMP_Dropdown.OptionDataList list = new();
+            for (int i = 0; i < Paths.Count; i++)
+                list.options.Add(new(Paths[i].name));
+
+            PathsDropdown.AddOptions(list.options);
+            PathsDropdown.RefreshShownValue();
+        }
+
+        #endregion
 
         [Header("Prefabs")]
         [SerializeField] private CardEditorPoint PointPrefab;
@@ -223,6 +319,7 @@ namespace RL.CardEditor
             if (PlayerPrefs.HasKey(USE_TRACHPAD_KEY))
                 MainCameraController.IsTrackpad = PlayerPrefs.GetInt(USE_TRACHPAD_KEY) == 1;
 
+            #region Tools buttons
             EditingPathButton.OnClick.AddListener(() =>
             {
                 Mode = Modes.EditingPath;
@@ -241,7 +338,9 @@ namespace RL.CardEditor
             {
                 Mode = Modes.EditingControlPoints;
             });
+            #endregion
 
+            PathsDropdown.ClearOptions();
             Load(null);
 
             Player.Path = Paths[0];
@@ -296,7 +395,7 @@ namespace RL.CardEditor
             //if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.S)) Save();
             //if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L)) Load();
 
-            if ((Input.GetKeyDown(KeyCode.Delete) || Input.GetKeyDown(KeyCode.Backspace)) && SelectedPoint != null) SelectedPath.RemovePoint(SelectedPoint);
+            if (Input.GetKeyDown(KeyCode.Delete) || Input.GetKeyDown(KeyCode.Backspace)) SelectedPoints.RemoveAll();
             if (Input.GetKeyDown(KeyCode.R) && SelectedPath.Count > 1) SelectedPath.RemovePoint(SelectedPath[^1]);
 
             if (Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.LeftControl))
@@ -304,6 +403,27 @@ namespace RL.CardEditor
                 if (Input.GetKeyDown(KeyCode.Alpha1)) Mode = Modes.EditingPath;
                 if (Input.GetKeyDown(KeyCode.Alpha2)) Mode = Modes.BuildsPath;
                 if (Input.GetKeyDown(KeyCode.Alpha3)) Mode = Modes.EditingControlPoints;
+
+                if (Input.GetKeyDown(KeyCode.S))
+                {
+                    GUIUtility.systemCopyBuffer = SelectedPath.Save();
+                    Debug.Log("Path has been saved");
+                }
+
+                if(Input.GetKeyDown(KeyCode.L))
+                {
+                    string buffer = GUIUtility.systemCopyBuffer;
+                    if (buffer.StartsWith("RLC"))
+                    {
+                        var path = CreatePath();
+                        path.name = "Loaded path";
+                        path.Load(buffer);
+                        UpdatePathsDropdownNames();
+                        SelectedPath = Paths[^1];
+
+                        Debug.Log("Path has been loaded");
+                    }
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.Space)) // Enter to preview mode
@@ -320,7 +440,6 @@ namespace RL.CardEditor
             if (ans)
             {
                 OnModeChanged = (_) => { };
-                OnSelectedPointChanged = (_) => { };
 
                 SceneLoader.LoadScene(0);
             }
@@ -335,19 +454,7 @@ namespace RL.CardEditor
         /// <exception cref="Exception"></exception>
         public void Load(params Paths.Path[] paths)
         {
-            CardEditorPath createPath(int num)
-            {
-                var path = new GameObject($"Path {num}").AddComponent<CardEditorPath>();
-                path.PointPrefab = PointPrefab; // Ставим префаб точки
-
-                return path;
-            }
-
-            // Создаём новый путь
-            var path = createPath(0);
-            path.CreatePoint(0, new Vector2(0, 0)); // Создаём первую точку
-
-            Paths.Add(path);
+            CreatePath();
             SelectedPath = Paths[0];
         }
         #endregion

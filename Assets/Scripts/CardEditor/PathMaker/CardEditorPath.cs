@@ -77,17 +77,20 @@ namespace RL.CardEditor
 
         #endregion
 
-        public void CreatePoint(float Time, Vector2 Position)
+        public void CreatePoint(float Time, Vector2 Position, Vector2? controlPoint = null)
         {
             //Проверка на уже существующую точку
             if (PointIsExist(Time, out int index))
+            {
                 Points[index].Position = Position;
+                if (controlPoint.HasValue) Points[index].ControlPoint.Position = controlPoint.Value;
+            }
 
             //Если созданная точка будет последняя
             else if (Points.Count <= 0 || Points[^1].Time < Time)
             {
                 // Создаём точку
-                CardEditorPoint point = SpawnPoint(Time, Position);
+                CardEditorPoint point = SpawnPoint(Time, Position, controlPoint);
 
                 Points.Add(point); // Добавляем точку в массив
                 point.Index = Count - 1; // Ставим индекс точке
@@ -100,7 +103,7 @@ namespace RL.CardEditor
                 int newI = GetIndexByTime(Time) ?? throw new Exception("Unknown error");
 
                 // Создаём точку
-                CardEditorPoint point = SpawnPoint(Time, Position);
+                CardEditorPoint point = SpawnPoint(Time, Position, controlPoint);
 
                 Points.Insert(newI + 1, point);
                 point.Index = newI;
@@ -131,8 +134,12 @@ namespace RL.CardEditor
                 for (int i = index; i < Count; i++)
                     Points[i].Index = i;
 
-                for (int i = index; i < Count; i++)
-                    Points[i].UpdateLine();
+                if (index < Count)
+                {
+                    Points[index].UpdateLine();
+                    for (int i = index + 2; i < Count; i++)
+                        Points[i].Time = Points[i - 1].Time + Points[i].LineLenght;
+                }
 
                 return true;
             }
@@ -140,11 +147,12 @@ namespace RL.CardEditor
             return false;
         }
 
-        private CardEditorPoint SpawnPoint(float Time, Vector2 Position)
+        private CardEditorPoint SpawnPoint(float Time, Vector2 Position, Vector2? controlPoint = null)
         {
             CardEditorPoint PB = Instantiate(PointPrefab, Position, Quaternion.identity, transform);
             PB.Time = Time;
             PB.Path = this;
+            if (controlPoint.HasValue) PB.ControlPoint.Position = controlPoint.Value;
             return PB;
         }
 
@@ -216,11 +224,14 @@ namespace RL.CardEditor
 
                         float currentPartTime = current.Time + currentPart.time;
                         float nextPartTime = current.Time + nextPart.time;
+                        float duration = nextPartTime - currentPartTime;
+                        Vector2 currentPartPosition = currentPart.position;
+                        Vector2 nextPartPosition = nextPart.position;
 
                         while (nextPartTime > (time = getTime()))
                         {
-                            float t = (time - currentPartTime) / (nextPartTime - currentPartTime);
-                            yield return Vector2.Lerp(currentPart.position, nextPart.position, t);
+                            float t = (time - currentPartTime) / duration;
+                            yield return Vector2.Lerp(currentPartPosition, nextPartPosition, t);
                         }
 
                         currentPart = nextPart;
@@ -235,6 +246,54 @@ namespace RL.CardEditor
         {
             for (int i = 0; i < Points.Count; i++) RemovePoint(Points[i]);
             Points.Clear();
+        }
+
+        public string Save()
+        {
+            StringBuilder builder = new();
+            builder.AppendLine("RLC 1");
+
+            for (int i = 0; i < Count; i++)
+            {
+                CardEditorPoint point = Points[i];
+                Vector2 pos = point.Position;
+                Vector2 cpp = point.ControlPoint.Position;
+
+                builder.AppendLine($"P,{point.Time},{pos.x},{pos.y},{cpp.x},{cpp.y}");
+            }
+
+            return builder.ToString();
+        }
+
+        public bool Load(string saved)
+        {
+            string[] lines = saved.Split('\n');
+            int count = lines.Length;
+
+            //if (saved.StartsWith("RLC")) return false;
+
+            for(int i = 1; i < count; i++)
+            {
+                string[] e = lines[i].Split(',');
+                switch(e[0])
+                {
+                    case "P": // Point
+                        if (!float.TryParse(e[1], out float time) ||
+                            !float.TryParse(e[2], out float x) ||
+                            !float.TryParse(e[3], out float y) ||
+                            !float.TryParse(e[4], out float cpx) ||
+                            !float.TryParse(e[5], out float cpy))
+                        {
+                            Debug.LogError("Не удалось загрузить одну из точек.");
+                            break;
+                        }
+
+                        CreatePoint(time, new(x, y), new(cpx, cpy));
+                        break;
+                }
+            }
+
+            return true;
         }
     }
 }

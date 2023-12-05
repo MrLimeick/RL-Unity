@@ -76,6 +76,7 @@
     <Compile Include="Assets/Scripts/Path/Path.cs" />
     <Compile Include="Assets/Scripts/Screenshoter.cs" />
     <Compile Include="Assets/Scripts/UI/Dialog.cs" />
+    <Compile Include="Assets/Scripts/UI/MonoBehaviourExtension.cs" />
     <Compile Include="Assets/Scripts/CardEditor/CameraController.cs" />
     <Compile Include="Assets/Scripts/CardEditor/PathMaker/CardEditorPoint.cs" />
     <Compile Include="Assets/Scripts/UI/ImagePropotions.cs" />

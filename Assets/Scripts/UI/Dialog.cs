@@ -3,47 +3,49 @@ using TMPro;
 using UnityEngine.UI;
 using System.Threading.Tasks;
 
+[RequireComponent(typeof(RectTransform))]
 public class Dialog : MonoBehaviour
 {
-    [Header("Texts")]
-    [SerializeField] private TMP_Text m_Header;
-    [SerializeField] private TMP_Text m_Message;
-
-    private static string Header { set => Instance.m_Header.text = value; }
-    private static string Message { set => Instance.m_Message.text = value; }
-
-    [Header("Question buttons")]
-    [SerializeField] private GameObject m_QuestionButtons;
-    [SerializeField] private Button m_Yes;
-    [SerializeField] private Button m_No;
-
-    [Header("Notify button")]
-    [SerializeField] private GameObject m_NotifyButton;
-    [SerializeField] private Button m_Ok;
-
-    private static Button.ButtonClickedEvent Yes => Instance.m_Yes.onClick;
-    private static Button.ButtonClickedEvent No => Instance.m_No.onClick;
-    private static Button.ButtonClickedEvent Ok => Instance.m_Ok.onClick;
-
-    private enum DialogType
+    enum DialogType
     {
         Question,
         Notify
     }
 
-    private static void SetDialogType(DialogType type)
+    [Header("Texts")]
+    [SerializeField] TMP_Text m_Header;
+    [SerializeField] TMP_Text m_Message;
+
+    [Header("Question buttons")]
+    [SerializeField] GameObject m_QuestionButtons;
+    [SerializeField] Button m_Yes;
+    [SerializeField] Button m_No;
+
+    [Header("Notify button")]
+    [SerializeField] GameObject m_NotifyButton;
+    [SerializeField] Button m_Ok;
+
+    protected static Dialog Instance;
+
+    static bool NeedUpdateLayoutGroup = false;
+    [SerializeField] RectTransform m_LayoutGroup;
+    static RectTransform LayoutGroup => Instance.m_LayoutGroup;
+
+    protected static Button.ButtonClickedEvent Yes => Instance.m_Yes.onClick;
+    protected static Button.ButtonClickedEvent No => Instance.m_No.onClick;
+    protected static Button.ButtonClickedEvent Ok => Instance.m_Ok.onClick;
+
+    static void SetDialogType(DialogType type)
     {
-        switch(type)
-        {
-            case DialogType.Question:
-                Instance.m_NotifyButton.SetActive(false);
-                Instance.m_QuestionButtons.SetActive(true);
-                break;
-            case DialogType.Notify:
-                Instance.m_NotifyButton.SetActive(true);
-                Instance.m_QuestionButtons.SetActive(false);
-                break;
-        }
+        Instance.m_NotifyButton.SetActive(type == DialogType.Notify);
+        Instance.m_QuestionButtons.SetActive(type == DialogType.Question);
+    }
+
+    protected static void SetHeaderAndMessage(string header, string message)
+    {
+        Instance.m_Header.text = header;
+        Instance.m_Message.text = message;
+        NeedUpdateLayoutGroup = true;
     }
 
     public static bool IsActive
@@ -53,37 +55,28 @@ public class Dialog : MonoBehaviour
     }
 
     [RuntimeInitializeOnLoadMethod]
-    static void Init()
+    static void Init() => InstanceObject.InstantiatePrefab(nameof(Dialog));
+
+    protected void Awake()
     {
-        var prefab = Resources.Load<GameObject>("Prefabs/Dialog");
-        Instantiate(prefab);
+        if (!this.SetInstance(ref Instance)) return;
     }
 
-    private static Dialog Instance;
-
-    private void Awake()
+    private void OnRenderObject()
     {
-        if (Instance != null)
+        if (NeedUpdateLayoutGroup)
         {
-            Destroy(gameObject);
-            return;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(m_LayoutGroup);
+            NeedUpdateLayoutGroup = false;
         }
-
-        Instance = this;
-
-        gameObject.hideFlags = HideFlags.HideAndDontSave;
-        DontDestroyOnLoad(gameObject);
-        gameObject.SetActive(false);
     }
 
     public static async Task ShowNotify(string header, string message)
     {
-        SetDialogType(DialogType.Notify);
-
         IsActive = true;
 
-        Header = header;
-        Message = message;
+        SetDialogType(DialogType.Notify);
+        SetHeaderAndMessage(header, message);
 
         bool pressed = false;
         Ok.AddListener(() => pressed = true);
@@ -92,6 +85,7 @@ public class Dialog : MonoBehaviour
         {
             if (!Application.isPlaying || Input.GetKeyDown(KeyCode.Escape))
                 pressed = true;
+
             await Task.Yield();
         }
 
@@ -103,11 +97,9 @@ public class Dialog : MonoBehaviour
     public static async Task<bool> ShowQuestion(string header, string message)
     {
         SetDialogType(DialogType.Question);
+        SetHeaderAndMessage(header, message);
 
         IsActive = true;
-
-        Header = header;
-        Message = message;
 
         bool? ans = null;
         Yes.AddListener(() => ans = true);
@@ -116,6 +108,7 @@ public class Dialog : MonoBehaviour
         while (ans == null)
         {
             if (!Application.isPlaying) ans = false;
+
             await Task.Yield();
         }
 
@@ -123,6 +116,7 @@ public class Dialog : MonoBehaviour
         No.RemoveAllListeners();
 
         IsActive = false;
+
         return ans.Value;
     }
 }

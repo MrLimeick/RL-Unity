@@ -2,6 +2,7 @@
 using Unity.Burst.Intrinsics;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UIElements;
 using static RL.CardEditor.PathMaker;
 
 namespace RL.CardEditor
@@ -20,6 +21,7 @@ namespace RL.CardEditor
                 if (value == (Vector2)transform.localPosition) return;
 
                 transform.localPosition = value;
+                MirroredCurvePoint.transform.localPosition = value * -1;
                 OnMoved?.Invoke(value * (IsMirrored ? -1 : 1));
                 Point.UpdateLine();
             }
@@ -61,7 +63,6 @@ namespace RL.CardEditor
                 mousePos = (MousePos - (Vector2)Point.transform.position) / scale,
                 position = roundVec(mousePos, grid / scale);
 
-            MirroredCurvePoint.transform.localPosition = position * -1;
             Position = position;
         }
 

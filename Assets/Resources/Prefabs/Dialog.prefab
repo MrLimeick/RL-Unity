@@ -1004,8 +1004,8 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: -1
+  m_VertexColorAlwaysGammaSpace: 1
+  m_AdditionalShaderChannelsFlag: 7
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 99
@@ -1069,6 +1069,7 @@ MonoBehaviour:
   m_No: {fileID: 5789801213345823731}
   m_NotifyButton: {fileID: 5449022728791030527}
   m_Ok: {fileID: 6245108777669498545}
+  m_LayoutGroup: {fileID: 7396589362465687132}
 --- !u!1 &5449022728791030527
 GameObject:
   m_ObjectHideFlags: 0

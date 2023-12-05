@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class SceneLoader : MonoBehaviour
 {
-    public static SceneLoader Instance { get; private set; }
+    protected static SceneLoader Instance;
 
     [SerializeField] private TMPro.TMP_Text m_Text;
     public static string Text
@@ -24,24 +24,11 @@ public class SceneLoader : MonoBehaviour
     }
 
     [RuntimeInitializeOnLoadMethod]
-    static void Init()
-    {
-        var prefab = Resources.Load<GameObject>("Prefabs/SceneLoader");
-        Instantiate(prefab);
-    }
+    static void Init() => InstanceObject.InstantiatePrefab(nameof(SceneLoader));
 
     void Awake()
     {
-        if(Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        Instance = this;
-
-        gameObject.hideFlags = HideFlags.HideAndDontSave;
-        DontDestroyOnLoad(gameObject);
-        gameObject.SetActive(false);
+        if (this.SetInstance(ref Instance)) return;
     }
 
     public static void LoadScene(int buildIndex)

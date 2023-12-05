@@ -27,7 +27,7 @@ public class Menu : MonoBehaviour
     // Use this for initialization
     void Start()
 	{
-		CardEditorEnterTime = DateTime.UtcNow.Ticks;
+		CardEditorEnterTime = DateTime.Now.Ticks;
 	}
 
 	// Update is called once per frame
@@ -35,10 +35,10 @@ public class Menu : MonoBehaviour
 	{
 		if (!IsShow) return;
 
-        TimeSpan time = new(CardEditorEnterTime - DateTime.UtcNow.Ticks);
+        TimeSpan time = new(CardEditorEnterTime - DateTime.Now.Ticks);
 
 		NotifyText.text =
-			$"Now <b>{DateTime.UtcNow:HH:mm:ss}</b>\n" +
+			$"Now <b>{DateTime.Now:HH:mm:ss}</b>\n" +
             $"You've been in the editor for <b>{time:hh\\:mm\\:ss}</b>\n" +
 			$"Don't forget to take a break!";
 	}
