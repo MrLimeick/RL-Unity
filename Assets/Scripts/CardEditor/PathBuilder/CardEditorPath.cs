@@ -1,26 +1,31 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
 using RL.Paths;
-using RL.Math;
-using static RL.CardEditor.PathMaker;
+using UnityEngine;
 
 namespace RL.CardEditor
 {
     [AddComponentMenu("RL/Card Editor/Path")]
-    public class CardEditorPath : MonoBehaviour
+    public class CardEditorPath : MonoBehaviour, IPath<CardEditorPath, CardEditorPoint>
     {
-        public List<CardEditorPoint> Points = new();
-        public int Count => Points.Count;
+        protected readonly List<CardEditorPoint> _points = new();
+
+        public int Count => _points.Count;
+
+        public float Duration { get; private set; } = 0;
+        public float HalfDuration { get; private set; } = 0;
 
         public CardEditorPoint PointPrefab;
 
         public float LineWidth = 0.25f;
 
-        public CardEditorPoint this[int index] => Points[index];
+        public CardEditorPoint this[int index]
+        {
+            get => _points[index];
+            set => throw new NotImplementedException();
+        } 
 
         public void GetLine(Vector2 A, Vector2 B, out Vector2 position, out float height, out float angle)
         {
@@ -32,7 +37,7 @@ namespace RL.CardEditor
         public int? GetIndexByTime(float time)
         {
             for (int i = 0; i < Count - 1; i++)
-                if (Points[i].Time <= time && Points[i + 1].Time > time)
+                if (_points[i].Time <= time && _points[i + 1].Time > time)
                     return i;
 
             return null;
@@ -47,52 +52,52 @@ namespace RL.CardEditor
         /// <returns>true - если существует</returns>
         public bool PointIsExist(float time, out int index)
         {
-            for (int i = 0; i < Points.Count; i++)
-            {
-                if (Points[i].Time == time)
+            for (int i = 0; i < _points.Count; i++)
+                if (_points[i].Time == time)
                 {
                     index = i;
                     return true;
                 }
-            }
+
             index = -1;
             return false;
         }
         /// <summary>
         /// Существует ли точка на таких кординатах
         /// </summary>
-        /// <param name="Position"></param>
+        /// <param name="position"></param>
         /// <returns></returns>
-        public bool PointIsExist(Vector2 Position)
+        public bool PointIsExist(Vector2 position, out int index)
         {
-            foreach (CardEditorPoint point in Points)
-            {
-                if (point.Position == Position)
+            for (int i = 0; i < _points.Count; i++)
+                if (_points[i].Position == position)
                 {
+                    index = i;
                     return true;
                 }
-            }
+
+            index = 0;
             return false;
         }
 
         #endregion
 
-        public void CreatePoint(float Time, Vector2 Position, Vector2? controlPoint = null)
+        public void CreatePoint(float time, Vector2 position, Vector2? controlPoint = null)
         {
             //Проверка на уже существующую точку
-            if (PointIsExist(Time, out int index))
+            if (PointIsExist(time, out int index))
             {
-                Points[index].Position = Position;
-                if (controlPoint.HasValue) Points[index].ControlPoint.Position = controlPoint.Value;
+                _points[index].Position = position;
+                if (controlPoint.HasValue) _points[index].ControlPoint = controlPoint.Value;
             }
 
             //Если созданная точка будет последняя
-            else if (Points.Count <= 0 || Points[^1].Time < Time)
+            else if (_points.Count <= 0 || _points[^1].Time < time)
             {
                 // Создаём точку
-                CardEditorPoint point = SpawnPoint(Time, Position, controlPoint);
+                CardEditorPoint point = SpawnPoint(time, position, controlPoint);
 
-                Points.Add(point); // Добавляем точку в массив
+                _points.Add(point); // Добавляем точку в массив
                 point.Index = Count - 1; // Ставим индекс точке
             }
 
@@ -100,16 +105,16 @@ namespace RL.CardEditor
             else
             {
                 // Получаем индекс новой точки
-                int newI = GetIndexByTime(Time) ?? throw new Exception("Unknown error");
+                int newI = GetIndexByTime(time) ?? throw new Exception("Unknown error");
 
                 // Создаём точку
-                CardEditorPoint point = SpawnPoint(Time, Position, controlPoint);
+                CardEditorPoint point = SpawnPoint(time, position, controlPoint);
 
-                Points.Insert(newI + 1, point);
+                _points.Insert(newI + 1, point);
                 point.Index = newI;
 
                 for (int i = newI + 1; i < Count; i++)
-                    Points[i].Index++;
+                    _points[i].Index++;
             }
         }
         /// <summary>
@@ -126,19 +131,20 @@ namespace RL.CardEditor
             //Если где-то в пути
             else
             {
-                var index = Points.IndexOf(point);
-                Points.RemoveAt(index); // удаляем точку из пути
+                var index = _points.IndexOf(point);
+                _points.RemoveAt(index); // удаляем точку из пути
                 
                 Destroy(point.gameObject); // Удаляем точку полностью
 
                 for (int i = index; i < Count; i++)
-                    Points[i].Index = i;
+                    _points[i].Index = i;
 
                 if (index < Count)
                 {
-                    Points[index].UpdateLine();
+                    _points[index].UpdateLine();
+
                     for (int i = index + 2; i < Count; i++)
-                        Points[i].Time = Points[i - 1].Time + Points[i].LineLenght;
+                        _points[i].Time = _points[i - 1].Time + _points[i].LineLenght;
                 }
 
                 return true;
@@ -152,7 +158,7 @@ namespace RL.CardEditor
             CardEditorPoint PB = Instantiate(PointPrefab, Position, Quaternion.identity, transform);
             PB.Time = Time;
             PB.Path = this;
-            if (controlPoint.HasValue) PB.ControlPoint.Position = controlPoint.Value;
+            if (controlPoint.HasValue) PB.ControlPoint = controlPoint.Value;
             return PB;
         }
 
@@ -166,30 +172,30 @@ namespace RL.CardEditor
         /// </returns>
         public Vector2? GetPosition(float time)
         {
-            CardEditorPoint current = Points[0];
-            int count = Points.Count;
+            CardEditorPoint current = _points[0];
+            int count = _points.Count;
 
             for (int i = 1; i < count; i++)
             {
-                CardEditorPoint next = Points[i];
+                CardEditorPoint next = _points[i];
 
                 if (current.Time <= time && next.Time > time)
                 {
-                    Point[] parts = next.LinePoints;
+                    PathPoint[] parts = next.LinePoints;
                     int partsCount = parts.Length;
-                    Point currentPart = parts[0];
+                    PathPoint currentPart = parts[0];
 
                     for(int j = 1; j < partsCount; j++)
                     {
-                        Point nextPart = parts[j];
+                        PathPoint nextPart = parts[j];
 
-                        float currentPartTime = current.Time + currentPart.time;
-                        float nextPartTime = current.Time + nextPart.time;
+                        float currentPartTime = current.Time + currentPart.Time;
+                        float nextPartTime = current.Time + nextPart.Time;
 
                         if (currentPartTime <= time && nextPartTime > time)
                         {
                             float t = (time - currentPartTime) / (nextPartTime - currentPartTime);
-                            return Vector2.Lerp(currentPart.position, nextPart.position, t);
+                            return Vector2.Lerp(currentPart.Position, nextPart.Position, t);
                         }
 
                         currentPart = nextPart;
@@ -204,29 +210,29 @@ namespace RL.CardEditor
 
         public IEnumerable<Vector2> GetPositions(Func<float> getTime)
         {
-            CardEditorPoint current = Points[0];
-            int count = Points.Count;
+            CardEditorPoint current = _points[0];
+            int count = _points.Count;
             float time = 0;
 
             for (int i = 1; i < count; i++)
             {
-                CardEditorPoint next = Points[i];
+                CardEditorPoint next = _points[i];
 
                 while (next.Time > time)
                 {
-                    Point[] parts = next.LinePoints;
+                    PathPoint[] parts = next.LinePoints;
                     int partsCount = parts.Length;
-                    Point currentPart = parts[0];
+                    PathPoint currentPart = parts[0];
 
                     for (int j = 1; j < partsCount; j++)
                     {
-                        Point nextPart = parts[j];
+                        PathPoint nextPart = parts[j];
 
-                        float currentPartTime = current.Time + currentPart.time;
-                        float nextPartTime = current.Time + nextPart.time;
+                        float currentPartTime = current.Time + currentPart.Time;
+                        float nextPartTime = current.Time + nextPart.Time;
                         float duration = nextPartTime - currentPartTime;
-                        Vector2 currentPartPosition = currentPart.position;
-                        Vector2 nextPartPosition = nextPart.position;
+                        Vector2 currentPartPosition = currentPart.Position;
+                        Vector2 nextPartPosition = nextPart.Position;
 
                         while (nextPartTime > (time = getTime()))
                         {
@@ -244,8 +250,8 @@ namespace RL.CardEditor
 
         public void Clear()
         {
-            for (int i = 0; i < Points.Count; i++) RemovePoint(Points[i]);
-            Points.Clear();
+            for (int i = 0; i < _points.Count; i++) RemovePoint(_points[i]);
+            _points.Clear();
         }
 
         public string Save()
@@ -253,11 +259,13 @@ namespace RL.CardEditor
             StringBuilder builder = new();
             builder.AppendLine("RLC 1");
 
+            builder.AppendLine($"N,{name}");
+
             for (int i = 0; i < Count; i++)
             {
-                CardEditorPoint point = Points[i];
+                CardEditorPoint point = _points[i];
                 Vector2 pos = point.Position;
-                Vector2 cpp = point.ControlPoint.Position;
+                Vector2 cpp = point.ControlPoint;
 
                 builder.AppendLine($"P,{point.Time},{pos.x},{pos.y},{cpp.x},{cpp.y}");
             }
@@ -277,6 +285,9 @@ namespace RL.CardEditor
                 string[] e = lines[i].Split(',');
                 switch(e[0])
                 {
+                    case "N": // Name
+                        name = e[1];
+                        break;
                     case "P": // Point
                         if (!float.TryParse(e[1], out float time) ||
                             !float.TryParse(e[2], out float x) ||
@@ -295,5 +306,9 @@ namespace RL.CardEditor
 
             return true;
         }
+
+        public IEnumerator<CardEditorPoint> GetEnumerator() => _points.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

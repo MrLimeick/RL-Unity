@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2905714508510198411}
   - component: {fileID: 3044015503545257115}
   m_Layer: 8
-  m_Name: Mirrored Curve Point
+  m_Name: Mirrored Control Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -384,56 +384,15 @@ MonoBehaviour:
   OnRemove:
     m_PersistentCalls:
       m_Calls: []
-  ControlPointsGroup: {fileID: 6397400253270798058}
-  ControlPoint: {fileID: 7640587754068681898}
-  MirroredControlPoint: {fileID: 3044015503545257115}
+  _controlPointsGroup: {fileID: 6397400253270798058}
+  _controlPoint: {fileID: 7640587754068681898}
+  _mirroredControlPoint: {fileID: 3044015503545257115}
   ControlPointLine: {fileID: 6793273527876367771}
-  LinePoints:
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  - time: 0
-    position: {x: 0, y: 0}
-  Path: {fileID: 0}
-  Index: 0
-  Time: 0
+  LinePoints: []
   DecarativeCircle: {fileID: 8989567031531338900}
   graphic: {fileID: 2831676989547213307}
+  m_Collider: {fileID: 9169838237427737735}
+  m_LineRenderer: {fileID: 1819186434906348359}
 --- !u!1 &3501851695578313773
 GameObject:
   m_ObjectHideFlags: 0
@@ -445,7 +404,7 @@ GameObject:
   - component: {fileID: 6793273527876367771}
   - component: {fileID: 8925892555525950134}
   m_Layer: 8
-  m_Name: Square
+  m_Name: Line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -611,7 +570,7 @@ GameObject:
   m_Component:
   - component: {fileID: 647971649734765371}
   m_Layer: 8
-  m_Name: Curve
+  m_Name: Control points
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -648,7 +607,7 @@ GameObject:
   - component: {fileID: 1169742932103327780}
   - component: {fileID: 7640587754068681898}
   m_Layer: 8
-  m_Name: Curve Point
+  m_Name: Control Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

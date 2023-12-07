@@ -1,18 +1,15 @@
 using System.Linq;
 using RL.Math;
+using RL.Paths;
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections;
-using System.Collections.Generic;
-
 using static RL.CardEditor.PathMaker;
-using System.Runtime.CompilerServices;
 
 namespace RL.CardEditor
 {
     [AddComponentMenu("RL/Card Editor/Point")]
     [RequireComponent(typeof(CircleCollider2D))]
-    public class CardEditorPoint : MonoBehaviour
+    public class CardEditorPoint : MonoBehaviour, ISyncPoint<CardEditorPoint, CardEditorPath>
     {
         [Header("Events")]
         public UnityEvent OnSelect = new();
@@ -20,19 +17,36 @@ namespace RL.CardEditor
         public UnityEvent OnRemove = new();
 
         [Header("Line")]
-        [SerializeField] private GameObject ControlPointsGroup;
-        public CardEditorCurvePoint ControlPoint;
-        [SerializeField] private CardEditorCurvePoint MirroredControlPoint;
+        [SerializeField] private GameObject _controlPointsGroup;
+        [SerializeField] private CardEditorControlPoint _controlPoint;
+        [SerializeField] private CardEditorControlPoint _mirroredControlPoint;
+
+        public Vector2 ControlPoint
+        {
+            get => _controlPoint.Position;
+            set => _controlPoint.Position = value;
+        }
+
+        public Vector2 MirroredControlPoint
+        {
+            get => _mirroredControlPoint.Position;
+            set => _mirroredControlPoint.Position = value;
+        }
+
         [SerializeField] private Transform ControlPointLine;
-        public Paths.Point[] LinePoints;
-        public int LinePointsLength => LinePoints.Length;
+
+        [System.NonSerialized]
+        public PathPoint[] LinePoints;
+
+        [SerializeField] private int _linePointsLenght = 20;
+        public int LinePointsLength => _linePointsLenght;
         public float LineLenght { get; protected set; } = 0;
 
-        [Header("Path")]
-        public CardEditorPath Path;
-        public int Index = 0;
+        //[Header("Path")]
+        public CardEditorPath Path { get; set; }
+        public int Index { get; set; } = 0;
 
-        public float Time = 0;
+        public float Time { get; set; } = 0;
 
         public CardEditorPoint Next => (Path.Count > Index + 1) ? Path[Index + 1] : null;
         public CardEditorPoint Previous => (0 < Index) ? Path[Index - 1] : null;
@@ -73,20 +87,15 @@ namespace RL.CardEditor
 
         private void OnMouseDrag()
         {
-            static float round(float num, float num2) => Mathf.Round(num / num2) * num2;
-
-            var MousePos = (Vector2)PathMaker.Camera.ScreenToWorldPoint(Input.mousePosition);
-            var NewPos = new Vector2(
-                x: round(MousePos.x, GridResolution.x),
-                y: round(MousePos.y, GridResolution.y));
+            var MousePos = PathMaker.MousePos;
 
             Vector2 oldPosition = Position;
-            if (Position != NewPos)
+            if (Position != MousePos)
             {
                 NoDrag = false;
 
-                if (Selected) SelectedPoints.MoveAll(NewPos - oldPosition);
-                else Position = NewPos;
+                if (Selected) SelectedPoints.MoveAll(MousePos - oldPosition);
+                else Position = MousePos;
             }
         }
 
@@ -136,6 +145,9 @@ namespace RL.CardEditor
         private void Awake()
         {
             m_LineRenderer.positionCount = LinePointsLength;
+
+            LinePoints = new PathPoint[_linePointsLenght];
+            for (int i = 0; i < _linePointsLenght; i++) LinePoints[i] = new PathPoint(0, 0, 0, 0, 0);
         }
 
         private void OnValidate()
@@ -154,7 +166,7 @@ namespace RL.CardEditor
         private void UpdateSelfLine()
         {
             {
-                Path.GetLine(ControlPoint.transform.localPosition, MirroredControlPoint.transform.localPosition, out _, out float height, out float angle);
+                Path.GetLine(ControlPoint, MirroredControlPoint, out _, out float height, out float angle);
                 ControlPointLine.transform.rotation = Quaternion.Euler(0, 0, angle);
                 ControlPointLine.transform.localScale = new(height, 0.2f);
             }
@@ -162,9 +174,9 @@ namespace RL.CardEditor
             if (Index == 0) return;
 
             var point = transform.position;
-            var pointControlPoint = ControlPoint.transform.position;
+            var pointControlPoint = _controlPoint.transform.position;
             var prevPoint = Previous.transform.position;
-            var prevControlPoint = Previous.MirroredControlPoint.transform.position;
+            var prevControlPoint = Previous._mirroredControlPoint.transform.position;
 
             float step = 1f / (LinePointsLength - 1);
             float lenght = 0;
@@ -174,17 +186,17 @@ namespace RL.CardEditor
                 controlPoint2: pointControlPoint,
                 point2: point, t);
 
-            LinePoints[0].position = getCurve(0);
-            LinePoints[0].time = lenght;
+            LinePoints[0].Position = getCurve(0);
+            LinePoints[0].Time = lenght;
             for (int i = 1; i < LinePointsLength; i++)
             {
-                LinePoints[i].position = getCurve(step * i);
+                LinePoints[i].Position = getCurve(step * i);
                 lenght += Vector2.Distance(LinePoints[i - 1], LinePoints[i]);
-                LinePoints[i].time = lenght;
+                LinePoints[i].Time = lenght;
             }
             LineLenght = lenght;
 
-            m_LineRenderer.SetPositions(LinePoints.Select((p) => (Vector3)p.position).ToArray());
+            m_LineRenderer.SetPositions(LinePoints.Select((p) => (Vector3)p.Position).ToArray());
 
             for (int i = Index; i < Path.Count; i++)
                 Path[i].Time = Path[i].Previous.Time + Path[i].LineLenght;
@@ -201,7 +213,7 @@ namespace RL.CardEditor
         {
             graphic.gameObject.SetActive(m_Collider.enabled = arg0 == Modes.EditingPath);
 
-            ControlPointsGroup.SetActive(arg0 == Modes.EditingControlPoints);
+            _controlPointsGroup.SetActive(arg0 == Modes.EditingControlPoints);
         }
     }
 }

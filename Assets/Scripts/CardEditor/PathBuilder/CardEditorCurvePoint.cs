@@ -1,15 +1,12 @@
-﻿using System.Collections;
-using Unity.Burst.Intrinsics;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UIElements;
 using static RL.CardEditor.PathMaker;
 
 namespace RL.CardEditor
 {
     [AddComponentMenu("RL/Card Editor/Curve Point")]
     [RequireComponent(typeof(CircleCollider2D), typeof(SpriteRenderer))]
-    public class CardEditorCurvePoint : MonoBehaviour
+    public class CardEditorControlPoint : MonoBehaviour
     {
         public UnityAction<Vector2> OnMoved;
 
@@ -31,7 +28,7 @@ namespace RL.CardEditor
         //CardEditorPath Path => Point.Path;
 
         public bool IsMirrored = false;
-        [SerializeField] private CardEditorCurvePoint MirroredCurvePoint;
+        [SerializeField] private CardEditorControlPoint MirroredCurvePoint;
 
         private CircleCollider2D Collider;
         private SpriteRenderer Renderer;
@@ -58,7 +55,7 @@ namespace RL.CardEditor
                 => new(round(vec.x, vec2.x), round(vec.y, vec2.y));
 
             Vector2
-                grid = OnEditingCurveGridResolution,
+                grid = Grids.Resolution,
                 scale = new(0.25f, 0.25f), // transform.lossyScale didn't work :( he send or 0.25f or 0.3f randomaly
                 mousePos = (MousePos - (Vector2)Point.transform.position) / scale,
                 position = roundVec(mousePos, grid / scale);

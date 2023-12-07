@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
+using System.Linq;
 
 namespace RL.Math
 {
@@ -61,6 +63,91 @@ namespace RL.Math
             return new(
                 x: getCurve(point1.x, controlPoint1.x, controlPoint2.x, point2.x),
                 y: getCurve(point1.y, controlPoint1.y, controlPoint2.y, point2.y));
+        }
+
+        public static int[] GetPascalsTriangleColumns(int row)
+        {
+            if (row == 0) return Array.Empty<int>();
+
+            int[] values = new int[row + 1];
+            for (int j = 0, val = 1; j <= row; j++)
+            {
+                if (j == 0 || row == 0)
+                    val = 1;
+                else
+                    val = val * (row - j + 1) / j;
+
+                values[j] = val;
+            }
+            return values;
+        }
+
+        public static float[] GetCurve(float t, float[,] points)
+        {
+            int columns = points.GetLength(0);
+            int rows = points.GetLength(1);
+            int[] triangle = GetPascalsTriangleColumns(columns);
+
+            float[] point = new float[columns];
+            for (int i = 0; i < columns; i++)
+            {
+                float value = GetCurveWithoutMultiplyPoint(i, columns, t, triangle);
+
+                for (int j = 0; j < rows; j++)
+                    point[i] += value * points[i, j];
+            }
+
+            return point;
+        }
+
+        public static Vector2 GetCurve(float t, params Vector2[] points)
+        {
+            int count = points.Length;
+            int[] triangle = GetPascalsTriangleColumns(count);
+
+            Vector2 point = new();
+            for (int i = 0; i < count; i++)
+            {
+                float value = GetCurveWithoutMultiplyPoint(i, count, t, triangle);
+
+                point.x += value * points[i].x;
+                point.y += value * points[i].y;
+            }
+
+            return point;
+        }
+
+        public static float GetCurve(float t, params float[] points)
+        {
+            int count = points.Length;
+            int[] triangle = GetPascalsTriangleColumns(count);
+
+            float value = 0;
+            for (int i = 0; i < count; i++)
+                value += GetCurveWithoutMultiplyPoint(i, count, t, triangle) * points[i];
+
+            return value;
+        }
+
+        static float GetCurveWithoutMultiplyPoint(in int index, in int count, in float t, in int[] triangle)
+        {
+            float value = 0;
+
+            if (index != 0)
+            {
+                if (index != count - 1)
+
+                    value = triangle[index + 1];
+                else
+                    value = 1;
+
+                value *= MathF.Pow(t, count - 1);
+            }
+
+            if (index != count - 1)
+                value *= MathF.Pow(1 - t, count - 1 - index);
+
+            return value;
         }
     }
     public static class TransformExtension

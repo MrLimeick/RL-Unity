@@ -7,7 +7,6 @@ TagManager:
   - Main editor window
   - GridCamera
   - Point
-  - Line
   layers:
   - Default
   - TransparentFX
