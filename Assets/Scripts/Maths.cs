@@ -40,7 +40,7 @@ namespace RL.Math
         public static float GetAngle(Vector3 Point1Pos, Vector3 Point2Pos)
         {
             return Mathf.Atan2(Point2Pos.y - Point1Pos.y,
-                Point2Pos.x - Point1Pos.x) * Mathf.Rad2Deg + 90;
+                Point2Pos.x - Point1Pos.x) * Mathf.Rad2Deg;
         }
 
         public static Vector2 GetCurveBy3Point(Vector2 point1, Vector2 point2, Vector2 point3, float t)
@@ -149,6 +149,25 @@ namespace RL.Math
 
             return value;
         }
+
+        public static Vector2 GetPositionByAngle(float angle, float distance)
+        {
+            float rad = angle * Mathf.Deg2Rad;
+
+            float x = Mathf.Cos(rad) * distance;
+            float y = Mathf.Sin(rad) * distance;
+
+            return new(x, y);
+        }
+
+        public static float Round(float x, float step)
+            => MathF.Round(x / step) * step;
+
+        public static Vector2 Round(Vector2 vector, Vector2 step)
+            => new(Round(vector.x, step.x), Round(vector.y, step.y));
+
+        public static float Floor(float x, float step)
+            => MathF.Floor(x / step) * step;
     }
     public static class TransformExtension
     {

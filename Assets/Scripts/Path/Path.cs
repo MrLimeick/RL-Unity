@@ -16,7 +16,41 @@ namespace RL.Paths
         public int Count => _points.Count;
         public float Duration => _points[^1].Time;
 
+        public float Width => .25f;
+
+        public SyncPoint Add(IPathPoint point)
+        {
+            throw new NotImplementedException();
+
+            float time = point.Time;
+        }
+
+        public SyncPoint Add(float time, Vector2 position, Vector2? controlPoint = null)
+        {
+            throw new NotImplementedException();
+
+            //if (Count <)
+
+            for (int i = 1; i < Count; i++)
+                if (_points[i - 1].Time <= time && _points[i].Time > time)
+                {
+                    SyncPoint point = new(this, i)
+                    {
+                        Time = time,
+                        Position = position,
+                        ControlPoint = controlPoint ?? Vector2.zero
+                    };
+
+                    _points.Insert(i, point);
+                }
+        }
+
         public IEnumerator<SyncPoint> GetEnumerator() => _points.GetEnumerator();
+
+        public int GetIndexByTime(float time)
+        {
+            throw new NotImplementedException();
+        }
 
         public Vector2? GetPosition(float time)
         {
@@ -55,6 +89,21 @@ namespace RL.Paths
             }
 
             return null;
+        }
+
+        public IEnumerable<Vector2> GetPositions(Func<float> getTime)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemoveAt(int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryGetIndexByTime(float time, out int index)
+        {
+            throw new NotImplementedException();
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

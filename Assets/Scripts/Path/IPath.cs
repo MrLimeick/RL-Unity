@@ -3,20 +3,12 @@ using UnityEngine;
 
 namespace RL.Paths
 {
-    public interface IPath<TSelf, TSyncPoint> : IReadOnlyList<TSyncPoint>
+    public interface IPath<TSelf, TSyncPoint> : IReadOnlyPath, IReadOnlyList<TSyncPoint>
         where TSelf : IPath<TSelf, TSyncPoint>
         where TSyncPoint : ISyncPoint<TSyncPoint, TSelf>
     {
-        /// <summary>
-        /// Длинна пути.
-        /// </summary>
-        public float Duration { get; }
+        public TSyncPoint Add(float time, Vector2 position, Vector2? controlPoint = null);
 
-        /// <summary>
-        /// Получить позицию на пути.
-        /// </summary>
-        /// <param name="time"></param>
-        /// <returns>Позиция на пути.</returns>
-        public Vector2? GetPosition(float time);
+        public void RemoveAt(int index);
     }
 }

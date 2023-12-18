@@ -3,40 +3,25 @@ using System.Collections;
 using System;
 using System.IO;
 
-public class Screenshoter : MonoBehaviour
+namespace RL.UX
 {
-    private Screenshoter Instance;
-
-    [RuntimeInitializeOnLoadMethod]
-    static void Init()
+    public class Screenshoter : MonoBehaviour
     {
-        var prefab = Resources.Load<GameObject>("Prefabs/Screenshoter");
-        Instantiate(prefab);
-    }
+        private Screenshoter Instance;
 
-    private void Awake()
-    {
-        if(Instance != null)
+        [RuntimeInitializeOnLoadMethod]
+        static void Init() => InstanceObject.InstantiatePrefab("Screenshoter");
+        private void Awake() => this.SetInstance(ref Instance, true);
+
+        public static void Take()
         {
-            Destroy(gameObject);
-            return;
+            if (!Directory.Exists("Screenshots")) Directory.CreateDirectory("Screenshots");
+            ScreenCapture.CaptureScreenshot($"Screenshots/{DateTime.Now:dddd, dd MMMM yyyy HH:mm:ss}.png");
         }
 
-        Instance = this;
-
-        DontDestroyOnLoad(this);
-        gameObject.hideFlags = HideFlags.HideAndDontSave;
-    }
-
-    public static void Take()
-    {
-        if (!Directory.Exists("Screenshots")) Directory.CreateDirectory("Screenshots");
-        ScreenCapture.CaptureScreenshot($"Screenshots/{DateTime.Now:dddd, dd MMMM yyyy HH:mm:ss}.png");
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.F12)) Take();
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.F12)) Take();
+        }
     }
 }
-

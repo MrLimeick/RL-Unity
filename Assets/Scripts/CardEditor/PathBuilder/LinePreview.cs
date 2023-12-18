@@ -1,10 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 
 namespace RL.CardEditor
 {
     public partial class PathMaker
     {
-        public class LinePreview
+        public class LinePreview : MonoBehaviour
         {
             private bool _enabled;
             public bool Enabled
@@ -16,36 +18,53 @@ namespace RL.CardEditor
 
                     _enabled = val;
 
-                    _line.gameObject.SetActive(val);
-                    _point.gameObject.SetActive(val);
+                    Line.gameObject.SetActive(val);
+                    Point.gameObject.SetActive(val);
                 }
             }
 
-            public Vector2 Position => Vector2.Lerp(StartPoint, EndPoint, 0.5f);
+            public Vector2 Position => Vector2.Lerp(Start, End, 0.5f);
             public const float s_Thickness = 0.25f;
-            public float Angle => Mathf.Atan2(EndPoint.y - StartPoint.y, EndPoint.x - StartPoint.x) * Mathf.Rad2Deg;
-            public float Lenght => Vector2.Distance(StartPoint, EndPoint);
-            public Vector2 StartPoint => Paths.Current[^1].Position;
-            public Vector2 EndPoint => MousePos;
+            public float Angle => Mathf.Atan2(End.y - Start.y, End.x - Start.x) * Mathf.Rad2Deg;
+            public float Lenght => Vector2.Distance(Start, End);
 
-            private readonly Transform _line;
-            private readonly Transform _point;
+            public Vector2 Start => Paths.Current[^1].Position;
+            public Vector2 End => MousePos;
 
-            public LinePreview(Transform line, Transform point)
+            private Transform _line;
+            public Transform Line
             {
-                _line = line;
-                _point = point;
+                get => _line;
+                set
+                {
+                    _line = value;
+                }
             }
 
+            private Transform _point;
+            public Transform Point
+            {
+                get => _point;
+                set
+                {
+                    _point = value;
+                }
+            }
+            
             public void Update()
             {
                 if (!Enabled)
                     return;
 
-                _line.position = Position;
-                _line.localScale = new Vector3(Lenght, s_Thickness, 0);
-                _line.rotation = Quaternion.Euler(0, 0, Angle);
-                _point.position = EndPoint;
+                Line.position = Position;
+                Line.localScale = new Vector3(Lenght, s_Thickness, 0);
+                Line.rotation = Quaternion.Euler(0, 0, Angle);
+                Point.position = End;
+            }
+
+            public void Dispose()
+            {
+
             }
         }
     }

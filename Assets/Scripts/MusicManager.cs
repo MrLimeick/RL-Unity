@@ -12,8 +12,6 @@ namespace RL
 {
     public class MusicManager
     {
-        public static MusicManager Current;
-
         /// <summary>
         /// Получить трек по пути к фалу
         /// </summary>
@@ -21,10 +19,10 @@ namespace RL
         /// <param name="Clip">Клип полученный из файла</param>
         /// <returns></returns>
         /// <exception cref="System.Exception"></exception>
-        public async static Task LoadAudioCourutine(string Path, UnityAction<AudioClip> Clip)
+        public async static Task<AudioClip> LoadAudio(string Path)
         {
-            if (File.Exists(Path)) throw new Exception("Файла, который должен был является музыкой, не существует!");
-            using UnityWebRequest UWR = UnityWebRequestMultimedia.GetAudioClip(Path, AudioType.UNKNOWN);
+            if (!File.Exists(Path)) throw new Exception("Файла, который должен был является музыкой, не существует!");
+            using UnityWebRequest UWR = UnityWebRequestMultimedia.GetAudioClip("file://" + Path, AudioType.UNKNOWN);
 
             var a = UWR.SendWebRequest();
             while (!a.isDone) await Task.Yield();
@@ -33,12 +31,10 @@ namespace RL
             {
                 AudioClip AC = DownloadHandlerAudioClip.GetContent(UWR);
                 Debug.Log("Музыка была успешно загружена!");
-                Clip.Invoke(AC);
+                return AC;
             }
             else
-            {
                 throw new Exception("Музыка не-была загружена из-за ошибки: " + UWR.error);
-            }
         }
     }
 }

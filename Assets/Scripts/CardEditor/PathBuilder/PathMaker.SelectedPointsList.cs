@@ -26,9 +26,14 @@ namespace RL.CardEditor
             public void RemoveAll()
             {
                 for (int i = 0; i < Points.Count; i++)
-                    Paths.Current.RemovePoint(Points[i]);
+                    Paths.Current.Remove(Points[i]);
 
                 Points.Clear();
+            }
+
+            public void RemoveLast() // TODO: Remove last point method
+            {
+                throw new System.NotImplementedException();
             }
 
             public void UnSelectAll()

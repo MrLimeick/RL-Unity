@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using RL.Paths;
 using UnityEngine;
@@ -14,17 +15,16 @@ namespace RL.CardEditor
 
         public int Count => _points.Count;
 
-        public float Duration { get; private set; } = 0;
+        public float Duration => (Count > 0) ? _points[^1].Time : 0;
         public float HalfDuration { get; private set; } = 0;
 
         public CardEditorPoint PointPrefab;
 
-        public float LineWidth = 0.25f;
+        public float Width { get; } = 0.25f;
 
         public CardEditorPoint this[int index]
         {
             get => _points[index];
-            set => throw new NotImplementedException();
         } 
 
         public void GetLine(Vector2 A, Vector2 B, out Vector2 position, out float height, out float angle)
@@ -34,22 +34,15 @@ namespace RL.CardEditor
             angle = Mathf.Atan2(B.y - A.y, B.x - A.x) * Mathf.Rad2Deg;
         }
 
-        public int? GetIndexByTime(float time)
+        public int GetIndexByTime(float time)
         {
             for (int i = 0; i < Count - 1; i++)
                 if (_points[i].Time <= time && _points[i + 1].Time > time)
                     return i;
 
-            return null;
+            return Count;
         }
 
-        #region PointIsExist
-
-        /// <summary>
-        /// Существует ли уже точка с таким времяним
-        /// </summary>
-        /// <param name="time">время</param>
-        /// <returns>true - если существует</returns>
         public bool PointIsExist(float time, out int index)
         {
             for (int i = 0; i < _points.Count; i++)
@@ -62,95 +55,86 @@ namespace RL.CardEditor
             index = -1;
             return false;
         }
-        /// <summary>
-        /// Существует ли точка на таких кординатах
-        /// </summary>
-        /// <param name="position"></param>
-        /// <returns></returns>
-        public bool PointIsExist(Vector2 position, out int index)
-        {
-            for (int i = 0; i < _points.Count; i++)
-                if (_points[i].Position == position)
-                {
-                    index = i;
-                    return true;
-                }
 
-            index = 0;
-            return false;
-        }
-
-        #endregion
-
-        public void CreatePoint(float time, Vector2 position, Vector2? controlPoint = null)
+        public CardEditorPoint Add(float time, Vector2 position, Vector2? controlPoint = null)
         {
             //Проверка на уже существующую точку
             if (PointIsExist(time, out int index))
             {
-                _points[index].Position = position;
-                if (controlPoint.HasValue) _points[index].ControlPoint = controlPoint.Value;
+                CardEditorPoint point = _points[index];
+                point.Position = position;
+                if (controlPoint.HasValue) point.ControlPoint = controlPoint.Value;
+                return point;
             }
 
-            //Если созданная точка будет последняя
+            // Если точка будет первой созданнной точкой в пути.
+            // Если созданная точка будет первой или последней
             else if (_points.Count <= 0 || _points[^1].Time < time)
             {
                 // Создаём точку
                 CardEditorPoint point = SpawnPoint(time, position, controlPoint);
 
                 _points.Add(point); // Добавляем точку в массив
-                point.Index = Count - 1; // Ставим индекс точке
+                point.Index = Count - 1; // Ставим индекс точки
+
+                return point;
             }
 
             //Если точка посреди пути
             else
             {
                 // Получаем индекс новой точки
-                int newI = GetIndexByTime(time) ?? throw new Exception("Unknown error");
+                int newI = GetIndexByTime(time);
 
                 // Создаём точку
                 CardEditorPoint point = SpawnPoint(time, position, controlPoint);
 
-                _points.Insert(newI + 1, point);
-                point.Index = newI;
+                _points.Insert(newI + 1, point); // Добавляем точку в массив
+                point.Index = newI; // Ставим индекс точки
 
-                for (int i = newI + 1; i < Count; i++)
+                for (int i = newI + 1; i < Count; i++) // Обновляем индекс последуюущих точек
                     _points[i].Index++;
+
+                return point;
             }
         }
+
+        public void RemoveAt(int index)
+            => Remove(index, _points[index]);
+
         /// <summary>
         /// Удалить точку из пути 
         /// </summary>
         /// <param name="point">точка для удаления</param>
-        public bool RemovePoint(CardEditorPoint point)
+        public bool Remove(CardEditorPoint point)
         {
             if (point == null) return false;
 
-            // Если первая
-            if (Count < 1) Debug.LogError("Невозможно удалить первую точку, Ей можно только поменять позицию");
-            
-            //Если где-то в пути
-            else
+            int index = _points.IndexOf(point);
+            if (index == -1) return false;
+
+            Remove(index, point);
+            return true;
+        }
+
+        void Remove(int index, CardEditorPoint point)
+        {
+            if (Count <= 1) Debug.LogError("Невозможно удалить первую точку, Ей можно только поменять позицию");
+
+            _points.RemoveAt(index); // удаляем точку из пути
+
+            Destroy(point.gameObject); // Удаляем точку полностью
+
+            for (int i = index; i < Count; i++)
+                _points[i].Index = i;
+
+            if (index < Count)
             {
-                var index = _points.IndexOf(point);
-                _points.RemoveAt(index); // удаляем точку из пути
-                
-                Destroy(point.gameObject); // Удаляем точку полностью
+                _points[index].UpdateLine();
 
-                for (int i = index; i < Count; i++)
-                    _points[i].Index = i;
-
-                if (index < Count)
-                {
-                    _points[index].UpdateLine();
-
-                    for (int i = index + 2; i < Count; i++)
-                        _points[i].Time = _points[i - 1].Time + _points[i].LineLenght;
-                }
-
-                return true;
+                for (int i = index + 2; i < Count; i++)
+                    _points[i].Time = _points[i - 1].Time + _points[i].LineLenght;
             }
-
-            return false;
         }
 
         private CardEditorPoint SpawnPoint(float Time, Vector2 Position, Vector2? controlPoint = null)
@@ -230,7 +214,9 @@ namespace RL.CardEditor
 
                         float currentPartTime = current.Time + currentPart.Time;
                         float nextPartTime = current.Time + nextPart.Time;
+
                         float duration = nextPartTime - currentPartTime;
+
                         Vector2 currentPartPosition = currentPart.Position;
                         Vector2 nextPartPosition = nextPart.Position;
 
@@ -250,7 +236,7 @@ namespace RL.CardEditor
 
         public void Clear()
         {
-            for (int i = 0; i < _points.Count; i++) RemovePoint(_points[i]);
+            for (int i = 0; i < _points.Count; i++) Remove(_points[i]);
             _points.Clear();
         }
 
@@ -299,7 +285,7 @@ namespace RL.CardEditor
                             break;
                         }
 
-                        CreatePoint(time, new(x, y), new(cpx, cpy));
+                        Add(time, new(x, y), new(cpx, cpy));
                         break;
                 }
             }

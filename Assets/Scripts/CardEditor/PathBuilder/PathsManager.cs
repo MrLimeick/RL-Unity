@@ -26,7 +26,7 @@ namespace RL.CardEditor
                 Current.gameObject.SetActive(true);
 
                 Dropdown.SetValueWithoutNotify(value);
-                Player.Path = Current;
+                CurrentChanged.Invoke(Current);
             }
         }
 
@@ -34,6 +34,8 @@ namespace RL.CardEditor
 
         private CardEditorPath _current;
         public CardEditorPath Current => _current;
+
+        public readonly UnityEngine.Events.UnityEvent<CardEditorPath> CurrentChanged = new();
 
         public CardEditorPath this[System.Index index] => Paths[index];
 
@@ -50,7 +52,7 @@ namespace RL.CardEditor
         public CardEditorPath Create(string name)
         {
             CardEditorPath path = SpawnPath(name);
-            path.CreatePoint(0, new(0, 0));
+            path.Add(0, new(0, 0));
 
             Index = Count - 1;
 
@@ -89,13 +91,16 @@ namespace RL.CardEditor
         public void Delete(CardEditorPath path)
             => Delete(Paths.IndexOf(path));
 
+        /// <summary>
+        /// Удаляет путь по индексу.
+        /// <para>Если путей больше не осталось будет создан новый.</para>
+        /// </summary>
+        /// <param name="index">Индекс удаляемого пути.</param>
+        /// <exception cref="System.ArgumentOutOfRangeException"/>
         public void Delete(int index)
         {
-            if (0 < index && index < Count)
-            {
-                Debug.Log(index);
+            if (0 > index || index >= Count)
                 throw new System.ArgumentOutOfRangeException(nameof(index));
-            }
 
             CardEditorPath path = Paths[index];
 
@@ -108,11 +113,11 @@ namespace RL.CardEditor
 
             Index = Paths.Count - 1;
 
-            UpdatePathsDropdownNames();
+            RefreshDropdownOptions();
             Dropdown.SetValueWithoutNotify(Paths.Count - 1);
         }
 
-        public void UpdatePathsDropdownNames()
+        public void RefreshDropdownOptions()
         {
             Dropdown.ClearOptions();
 
@@ -121,14 +126,18 @@ namespace RL.CardEditor
                 list.options.Add(new(Paths[i].name));
 
             Dropdown.AddOptions(list.options);
-            Dropdown.RefreshShownValue();
+            if (Dropdown.IsExpanded) Dropdown.RefreshShownValue();
         }
 
         public PathsList(CardEditorPoint pointPrefab, TMP_Dropdown dropdown)
         {
             PointPrefab = pointPrefab;
             Dropdown = dropdown;
+
+            Dropdown.ClearOptions();
+            Create();
+
+            Index = 0;
         }
     }
-
 }

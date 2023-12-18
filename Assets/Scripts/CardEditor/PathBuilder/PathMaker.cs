@@ -1,5 +1,6 @@
 ﻿using System;
 using RL.Game;
+using RL.Math;
 using RL.UI;
 using TMPro;
 using UnityEngine;
@@ -16,16 +17,39 @@ namespace RL.CardEditor
         public static PathsList Paths { get; protected set; }
         public static GridSettings Grids { get; protected set; }
 
+        public static Vector2 LastPointPosition => Instance.m_Preview.Start;
+        public static bool GlobalGrid = false;
+
+        public void SetGlobalGrid(bool value)
+            => GlobalGrid = value;
+
         public static Vector2 MousePos
         {
             get
             {
                 Vector2 mousePos = Instance.m_Camera.ScreenToWorldPoint(Input.mousePosition);
-                Vector2 grid = Grids.Resolution;
-                return new Vector2(
-                    Mathf.Round(mousePos.x / grid.x) * grid.x,
-                    Mathf.Round(mousePos.y / grid.y) * grid.y);
+                Vector2 center = GlobalGrid ? Vector2.zero : LastPointPosition;
+
+                switch (BuildMode)
+                {
+                    case BuildModes.ByGrid:
+                        Vector2 grid = Grids.Resolution;
+                        return Maths.Round(mousePos - center, grid) + center;
+                    default:
+                        Maths.GetLineTransform(center, mousePos, out _, out float dis, out float angle);
+                        return Maths.GetPositionByAngle(Maths.Round(angle, 5f), Mathf.Max(Maths.Floor(dis, Grids.Radius), Grids.Radius)) + center;
+                }
             }
+        }
+
+        public void SetDistanceSnapStep(string x)
+        {
+            if (float.TryParse(x, out float res))
+            {
+                Grids.Radius = res;
+                Debug.Log("Distance snap set successful.");
+            }
+            else Debug.LogError("value is NaN.");
         }
 
         [Serializable] private class ToolsButtons
@@ -106,7 +130,7 @@ namespace RL.CardEditor
         }
 
         private BuildModes m_BuildMode = BuildModes.ByGrid;
-        public static BuildModes BuildMode
+        public static BuildModes BuildMode // TODO: BuildMode это просто режим сетки?
         {
             get => Instance.m_BuildMode;
             set
@@ -114,7 +138,18 @@ namespace RL.CardEditor
                 if (value == Instance.m_BuildMode) return;
 
                 Instance.m_BuildMode = value;
+                Instance.GridCamera.GridType = value switch
+                {
+                    BuildModes.ByGrid => GridType.Square,
+                    BuildModes.LockedHeight => GridType.Circle,
+                    _ => throw new NotImplementedException()
+                };
             }
+        }
+
+        public void UseDistanceSnap(bool value)
+        {
+            BuildMode = value ? BuildModes.LockedHeight : BuildModes.ByGrid;
         }
         #endregion
 
@@ -138,7 +173,7 @@ namespace RL.CardEditor
 
             if (int.TryParse(value, out int res))
             {
-                Time.timeScale = res / 100;
+                Time.timeScale = res / 100f;
                 Debug.Log("Time set successful.");
             }
             else Debug.LogError("value is NaN.");
@@ -166,19 +201,25 @@ namespace RL.CardEditor
             m_ToolsButtons.Init();
 
             Grids = new(GridCamera);
-            m_Preview = new(Line, Point);
+            m_Preview = gameObject.AddComponent<LinePreview>();
+            m_Preview.Line = Line;
+            m_Preview.Point = Point;
+            m_Preview.Enabled = true;
 
             Paths = new(PointPrefab, PathsDropdown);
-            PathsDropdown.ClearOptions();
-            Load(null);
             Player.Path = Paths[0];
+            Paths.CurrentChanged.AddListener((path) =>
+            {
+                Player.Path = path;
+                if (Player.Moved) Player.Stop();
+            });
 
             #region Viewport events
 
             Viewport.OnLeftClick.AddListener((_) =>
             {
                 if (Mode == Modes.BuildsPath)
-                    Paths.Current.CreatePoint(Paths.Current[^1].Time + m_Preview.Lenght, m_Preview.EndPoint);
+                    Paths.Current.Add(Paths.Current[^1].Time + m_Preview.Lenght, m_Preview.End);
             }); // При нажатии левой клавишой мышки по Editor Viewport создавать новый точку и линию
             Viewport.OnStay.AddListener((_)
                 => m_Preview.Update()); // Если находится в EditorViewport
@@ -213,7 +254,7 @@ namespace RL.CardEditor
                 SelectedPoints.RemoveAll();
 
             if (Input.GetKeyDown(KeyCode.R) && Paths.Current.Count > 1)
-                Paths.Current.RemovePoint(Paths.Current[^1]);
+                Paths.Current.Remove(Paths.Current[^1]);
 
             if (Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.LeftControl))
             {
@@ -259,19 +300,5 @@ namespace RL.CardEditor
                 SceneLoader.LoadScene(0);
             }
         }
-
-        #region Save and load
-        /// <summary>
-        /// Загружает пути.
-        /// </summary>
-        /// <param name="paths">Пути, при <c>null</c> загружаеться пустой путь.</param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public void Load(params Paths.Path[] paths)
-        {
-            Paths.Create();
-            Paths.Index = 0;
-        }
-        #endregion
     }
 }

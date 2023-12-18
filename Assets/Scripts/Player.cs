@@ -12,7 +12,7 @@ namespace RL.Game
     /// </summary>
     public class Player : MonoBehaviour
     {
-        public static CardEditor.CardEditorPath Path;
+        public IReadOnlyPath Path;
 
         private Coroutine MoveHandle;
 
@@ -34,14 +34,17 @@ namespace RL.Game
             StopCoroutine(MoveHandle);
             Moved = false;
 
-            transform.position = transform.localScale = Vector2.zero;
+            transform.position = Vector2.zero;
+            transform.localScale = Vector2.zero;
         }
 
         IEnumerator MoveCoroutine()
         {
-            if (Path.Count < 2)
+            IReadOnlyPath path = Path;
+
+            if (path.Duration <= 0)
             {
-                Debug.LogError("В пути менее 2 точек, движение невозможно.");
+                Debug.LogError("Длинна пути 0 секунд, движение невозможно.");
                 yield break; // Проверка на наличее более двух точек в пути
             }
 
@@ -56,12 +59,12 @@ namespace RL.Game
                 return localTime;
             }
 
-            foreach(var pos in Path.GetPositions(getTime))
+            foreach(var pos in path.GetPositions(getTime))
             {
                 if (localTime < 1) transform.localScale = new(localTime, localTime);
-                else if (Path[^1].Time - localTime < 1)
+                else if (path.Duration - localTime < 1)
                 {
-                    float s = Path[^1].Time - localTime;
+                    float s = path.Duration - localTime;
                     transform.localScale = new(s, s);
                 }
                 else transform.localScale = Vector3.one;

@@ -2,23 +2,15 @@
 
 public static class InstanceObject
 {
-    public static bool SetInstance<T>(this T @this, ref T instance) where T : MonoBehaviour
+    public static void SetInstance<T>(this T @this, ref T instance, bool active = false, bool hide = true, bool dontDestroy = true) where T : MonoBehaviour
     {
-        GameObject gameObject = @this.gameObject;
-
-        if (instance != null)
-        {
-            Object.Destroy(gameObject);
-            return false;
-        }
-
+        if (instance != null) Object.Destroy(instance.gameObject);
         instance = @this;
 
-        gameObject.hideFlags = HideFlags.HideAndDontSave;
-        Object.DontDestroyOnLoad(gameObject);
-        gameObject.SetActive(false);
-
-        return true;
+        GameObject gameObject = @this.gameObject;
+        if (hide) gameObject.hideFlags = HideFlags.HideAndDontSave;
+        if (dontDestroy) Object.DontDestroyOnLoad(gameObject);
+        gameObject.SetActive(active);
     }
 
     /// <summary>

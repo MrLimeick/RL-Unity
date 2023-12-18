@@ -16,6 +16,7 @@ namespace RL.CardEditor
         public UnityEvent OnDeSelect = new();
         public UnityEvent OnRemove = new();
 
+        #region Line
         [Header("Line")]
         [SerializeField] private GameObject _controlPointsGroup;
         [SerializeField] private CardEditorControlPoint _controlPoint;
@@ -41,6 +42,7 @@ namespace RL.CardEditor
         [SerializeField] private int _linePointsLenght = 20;
         public int LinePointsLength => _linePointsLenght;
         public float LineLenght { get; protected set; } = 0;
+        #endregion
 
         //[Header("Path")]
         public CardEditorPath Path { get; set; }
@@ -146,8 +148,7 @@ namespace RL.CardEditor
         {
             m_LineRenderer.positionCount = LinePointsLength;
 
-            LinePoints = new PathPoint[_linePointsLenght];
-            for (int i = 0; i < _linePointsLenght; i++) LinePoints[i] = new PathPoint(0, 0, 0, 0, 0);
+            
         }
 
         private void OnValidate()
@@ -185,6 +186,13 @@ namespace RL.CardEditor
                 controlPoint1: prevControlPoint,
                 controlPoint2: pointControlPoint,
                 point2: point, t);
+
+
+            if(LinePoints == null)
+            {
+                LinePoints = new PathPoint[_linePointsLenght];
+                for (int i = 0; i < _linePointsLenght; i++) LinePoints[i] = new PathPoint(0, 0, 0, 0, 0);
+            }
 
             LinePoints[0].Position = getCurve(0);
             LinePoints[0].Time = lenght;

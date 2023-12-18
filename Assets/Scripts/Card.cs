@@ -1,37 +1,56 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using UnityEngine;
 
 namespace RL
 {
-    /// <summary>
-    /// Хранилище всей информации об карте
-    /// </summary>
-    [System.Serializable] public class Card
+    public interface ICard
     {
         /// <summary>
         /// Название трека
         /// </summary>
-        [SerializeField] public string Name;
+        public string Title { get; set; }
+
         /// <summary>
-        /// Название сложности
+        /// Название карточки
         /// </summary>
-        [SerializeField] public string Difficulty;
+        public string Name { get; set; }
+
         /// <summary>
         /// Создатели трека
         /// </summary>
-        [SerializeField] public string Artits; 
+        public string Artits { get; set; }
+
         /// <summary>
         /// Создатели карты
         /// </summary>
-        [SerializeField] public string Creators;
+        public string Creators { get; set; }
+
         /// <summary>
         /// Относительный путь до файл с треком
         /// </summary>
-        [SerializeField] public string AudioFilePath;
+        public string AudioFilePath { get; set; }
+
         /// <summary>
         /// Относительный путь до файла с заднем фоном
         /// </summary>
-        [SerializeField] public string BackgroundFilePath;
+        public string BackgroundFilePath { get; set; }
+    }
+
+    /// <summary>
+    /// Хранилище всей информации об карте
+    /// </summary>
+    [Serializable] public class Card : ICard
+    {
+        [field: SerializeField] public string Title { get; set; } = "Untitled";
+        [field: SerializeField] public string Name { get; set; } = "Easy";
+        [field: SerializeField] public string Artits { get; set; } = "Undefined";
+        [field: SerializeField] public string Creators { get; set; } = "Undefined";
+        [field: SerializeField] public float BPM { get; set; } = 80;
+
+        public string AudioFilePath { get; set; }
+        public string BackgroundFilePath { get; set; }
+
         /// <summary>
         /// Файл с изображением заднего фона
         /// </summary>
@@ -47,6 +66,7 @@ namespace RL
             }
             set => BackgroundFilePath = value.FullName; 
         }
+
         /// <summary>
         /// Файл с треком уровня
         /// </summary>
@@ -65,10 +85,13 @@ namespace RL
         /// <summary>
         /// FileInfo данного RLM файла
         /// </summary>
-        public FileInfo FileInfo;
+        public FileInfo FileInfo { get; set; }
         /// <summary>
         /// Путь игрока
         /// </summary>
-        public Paths.Path PlayerPath; 
+        public Paths.Path PlayerPath { get; set; }
+
+        public override string ToString()
+            => $"{Artits} - {Title} ({Name} by {Creators})";
     }
 }

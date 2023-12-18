@@ -56,11 +56,7 @@ public class Dialog : MonoBehaviour
 
     [RuntimeInitializeOnLoadMethod]
     static void Init() => InstanceObject.InstantiatePrefab(nameof(Dialog));
-
-    protected void Awake()
-    {
-        if (!this.SetInstance(ref Instance)) return;
-    }
+    protected void Awake() => this.SetInstance(ref Instance);
 
     private void OnRenderObject()
     {
