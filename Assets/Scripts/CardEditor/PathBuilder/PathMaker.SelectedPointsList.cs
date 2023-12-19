@@ -31,7 +31,7 @@ namespace RL.CardEditor
                 Points.Clear();
             }
 
-            public void RemoveLast() // TODO: Remove last point method
+            public void RemoveLast() // TODO: Удаление последней точки среди выбранных.
             {
                 throw new System.NotImplementedException();
             }

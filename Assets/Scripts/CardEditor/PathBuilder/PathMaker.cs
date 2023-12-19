@@ -11,7 +11,7 @@ namespace RL.CardEditor
 {
     public partial class PathMaker : MonoBehaviour
     {
-        private static PathMaker Instance { get; set; } = null;
+        private static PathMaker Instance = null;
 
         public static SelectedPointsList SelectedPoints { get; protected set; } = new();
         public static PathsList Paths { get; protected set; }
@@ -44,6 +44,7 @@ namespace RL.CardEditor
 
         public void SetDistanceSnapStep(string x)
         {
+            
             if (float.TryParse(x, out float res))
             {
                 Grids.Radius = res;
@@ -96,7 +97,7 @@ namespace RL.CardEditor
         [Header("Prefabs")]
         [SerializeField] private CardEditorPoint PointPrefab;
 
-        [Header("Preview")]
+        [Header("Preview")] // TODO: Preview и… Preview? Переделать предпросмотр карты.
         [SerializeField] private Transform Point;
         [SerializeField] private Transform Line;
 
@@ -193,8 +194,7 @@ namespace RL.CardEditor
 
         public void Awake()
         {
-            if (Instance != null) Destroy(Instance.gameObject);
-            Instance = this;
+            this.SetInstance(ref Instance, true, false, false);
 
             EventSystem = EventSystem.current;
 

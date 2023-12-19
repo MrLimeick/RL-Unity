@@ -62,14 +62,14 @@ namespace RL.CardEditor
             _canvasGroup.alpha = 1 - t;
         }
 
-        IEnumerator Anim(float duration, Action<float> action, bool invert = false)
+        IEnumerator Anim(float duration, Action<float> action, bool invert = false) // Анимации как отдельный класс?
         {
             _canvasGroup.blocksRaycasts = !invert;
 
-            float start = Time.time;
+            float start = Time.unscaledTime;
 
             float localTime;
-            while ((localTime = (Time.time - start) / duration) < 1)
+            while ((localTime = (Time.unscaledTime - start) / duration) < 1)
             {
                 float t = invert ? OutExpo(localTime) : (1 - OutExpo(localTime));
                 action(t);
