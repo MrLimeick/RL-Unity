@@ -19,12 +19,27 @@ public class Animation
 		_monoBehaviour = monoBehaviour;
 	}
 
+	/// <summary>
+	/// Запускает анимацию.
+	/// </summary>
 	public void Start()
 	{
         if (_coroutine != null) _monoBehaviour.StopCoroutine(_coroutine);
-        _coroutine = _monoBehaviour.StartCoroutine(AnimationCoroutine());
+        _coroutine = _monoBehaviour.StartCoroutine(AnimationCoroutine(UnscaledTime, Invert));
     }
 
+	/// <summary>
+	/// Запускает аниимацию задом-наперёд.
+	/// </summary>
+	public void StartInverted()
+	{
+        if (_coroutine != null) _monoBehaviour.StopCoroutine(_coroutine);
+        _coroutine = _monoBehaviour.StartCoroutine(AnimationCoroutine(UnscaledTime, !Invert));
+    }
+
+	/// <summary>
+	/// Завершает анимацию на текущем моменте.
+	/// </summary>
 	public void Stop()
 	{
 		if (_coroutine == null) return;
@@ -42,21 +57,24 @@ public class Animation
 		return _localTime;
 	}
 
-    IEnumerator AnimationCoroutine()
+    IEnumerator AnimationCoroutine(bool unscaledTime, bool invert)
     {
-		OnStart?.Invoke();
+		if (invert) OnEnd?.Invoke();
+		else OnStart?.Invoke();
 
-        _startTime = UnscaledTime ? Time.unscaledTime : Time.time;
+        _startTime = unscaledTime ? Time.unscaledTime : Time.time;
 
         while (UpdateTime() < 1)
         {
-            var t = Invert ? (1 - _localTime) : _localTime;
+            var t = invert ? (1 - _localTime) : _localTime;
             Action?.Invoke(t);
 
             yield return 0;
         }
 
-		Action?.Invoke(Invert ? 0 : 1);
-		OnEnd?.Invoke();
+		Action?.Invoke(invert ? 0 : 1);
+
+        if (invert) OnStart?.Invoke();
+        else OnEnd?.Invoke();
     }
 }

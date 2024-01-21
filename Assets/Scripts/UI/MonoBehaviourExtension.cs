@@ -8,7 +8,7 @@ public static class InstanceObject
         instance = @this;
 
         GameObject gameObject = @this.gameObject;
-        if (hide) gameObject.hideFlags = HideFlags.HideAndDontSave;
+        if (hide) gameObject.hideFlags = HideFlags.DontSave;
         if (dontDestroy) Object.DontDestroyOnLoad(gameObject);
         gameObject.SetActive(active);
     }

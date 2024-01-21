@@ -40,7 +40,9 @@ namespace RL.MainMenu
 
         public async void OpenCards()
         {
-            await Dialog.ShowNotify("Soon!", "See next releases!");
+            var file = await FileBrowser.Open();
+            global::Game.PathToBeatmap = file.FullName;
+            SceneLoader.LoadScene(2);
         }
 
         public async void Close()

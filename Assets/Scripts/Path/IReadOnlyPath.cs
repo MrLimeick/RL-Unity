@@ -25,6 +25,8 @@ namespace RL.Paths
 
         public IEnumerable<Vector2> GetPositions(Func<float> getTime);
 
+        public Vector2[] GetPointsPositions();
+
         public int GetIndexByTime(float time);
     }
 }

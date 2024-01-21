@@ -6,37 +6,37 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
 namespace RL.CardEditor
 {
     public partial class PathMaker : MonoBehaviour
     {
-        private static PathMaker Instance = null;
-
-        public static SelectedPointsList SelectedPoints { get; protected set; } = new();
-        public static PathsList Paths { get; protected set; }
-        public static GridSettings Grids { get; protected set; }
-
-        public static Vector2 LastPointPosition => Instance.m_Preview.Start;
-        public static bool GlobalGrid = false;
+        private static PathMaker _instance;
+        public static SelectedPointsList SelectedPoints { get; } = new();
+        private static PathsList _paths;
+        public static GridSettings Grids { get; private set; }
+        public static Vector2 LastPointPosition => _instance._preview.Start;
+        public static bool GlobalGrid;
 
         public void SetGlobalGrid(bool value)
             => GlobalGrid = value;
-
+        
         public static Vector2 MousePos
         {
             get
             {
-                Vector2 mousePos = Instance.m_Camera.ScreenToWorldPoint(Input.mousePosition);
-                Vector2 center = GlobalGrid ? Vector2.zero : LastPointPosition;
+                var mousePos = (Vector2)_instance.cam.ScreenToWorldPoint(Input.mousePosition);
+                var center = GlobalGrid ? Vector2.zero : LastPointPosition;
 
                 switch (BuildMode)
                 {
                     case BuildModes.ByGrid:
                         Vector2 grid = Grids.Resolution;
                         return Maths.Round(mousePos - center, grid) + center;
+                    case BuildModes.LockedHeight:
                     default:
-                        Maths.GetLineTransform(center, mousePos, out _, out float dis, out float angle);
+                        Maths.GetLineTransform(center, mousePos, out _, out var dis, out var angle);
                         return Maths.GetPositionByAngle(Maths.Round(angle, 5f), Mathf.Max(Maths.Floor(dis, Grids.Radius), Grids.Radius)) + center;
                 }
             }
@@ -55,32 +55,33 @@ namespace RL.CardEditor
 
         [Serializable] private class ToolsButtons
         {
-            public Button EditingPath;
-            public Button BuildPath;
-            public Button EditingCurves;
+            public Button editingPath;
+            public Button buildPath;
+            public Button editingCurves;
 
             public void Init()
             {
-                EditingPath.OnClick.AddListener(() => Mode = Modes.EditingPath);
-                BuildPath.OnClick.AddListener(() => Mode = Modes.BuildsPath);
-                EditingCurves.OnClick.AddListener(() => Mode = Modes.EditingControlPoints);
+                editingPath.OnClick.AddListener(() => Mode = Modes.EditingPath);
+                buildPath.OnClick.AddListener(() => Mode = Modes.BuildsPath);
+                editingCurves.OnClick.AddListener(() => Mode = Modes.EditingControlPoints);
             }
         }
-        [SerializeField] private ToolsButtons m_ToolsButtons;
+        [SerializeField] private ToolsButtons toolsButtons;
 
         #region Paths
 
+        [FormerlySerializedAs("PathsDropdown")]
         [Header("Paths")]
-        [SerializeField] private TMP_Dropdown PathsDropdown;
+        [SerializeField] private TMP_Dropdown pathsDropdown;
 
         public void ChangePathButton(int index)
-            => Paths.Index = index;
+            => _paths.Index = index;
 
         public void CreatePathButton()
         {
-            Paths.Create();
+            _paths.Create();
 
-            PathsDropdown.Hide();
+            pathsDropdown.Hide();
         }
 
         public async void DeletePathButton()
@@ -88,23 +89,26 @@ namespace RL.CardEditor
             bool ans = await Dialog.ShowQuestion("Remove path?", "You realy want delete this path?");
             if (!ans) return;
 
-            Paths.DeleteCurrent();
-            PathsDropdown.Hide();
+            _paths.DeleteCurrent();
+            pathsDropdown.Hide();
         }
 
         #endregion
 
+        [FormerlySerializedAs("PointPrefab")]
         [Header("Prefabs")]
-        [SerializeField] private CardEditorPoint PointPrefab;
+        [SerializeField] private CardEditorPoint pointPrefab;
 
+        [FormerlySerializedAs("Point")]
         [Header("Preview")] // TODO: Preview и… Preview? Переделать предпросмотр карты.
-        [SerializeField] private Transform Point;
-        [SerializeField] private Transform Line;
+        [SerializeField] private Transform point;
+        [FormerlySerializedAs("Line")] [SerializeField] private Transform line;
 
-        private LinePreview m_Preview;
+        private LinePreview _preview;
 
+        [FormerlySerializedAs("GridCamera")]
         [Header("Grid")]
-        [SerializeField] private GridCamera GridCamera;
+        [SerializeField] private GridCamera gridCamera;
 
         #region Modes
         public static event UnityAction<Modes> OnModeChanged;
@@ -114,13 +118,13 @@ namespace RL.CardEditor
         private Modes m_Mode = Modes.None;
         public static Modes Mode
         {
-            get => Instance.m_Mode;
+            get => _instance.m_Mode;
             set
             {
-                if (value == Instance.m_Mode) return;
+                if (value == _instance.m_Mode) return;
 
-                Instance.m_Mode = value;
-                Instance.m_Preview.Enabled = true;
+                _instance.m_Mode = value;
+                _instance._preview.Enabled = true;
                 Grids.Resolution = value switch
                 {
                     Modes.BuildsPath or Modes.EditingPath => Grids.BuildPath,
@@ -133,13 +137,13 @@ namespace RL.CardEditor
         private BuildModes m_BuildMode = BuildModes.ByGrid;
         public static BuildModes BuildMode // TODO: BuildMode это просто режим сетки?
         {
-            get => Instance.m_BuildMode;
+            get => _instance.m_BuildMode;
             set
             {
-                if (value == Instance.m_BuildMode) return;
+                if (value == _instance.m_BuildMode) return;
 
-                Instance.m_BuildMode = value;
-                Instance.GridCamera.GridType = value switch
+                _instance.m_BuildMode = value;
+                _instance.gridCamera.GridType = value switch
                 {
                     BuildModes.ByGrid => GridType.Square,
                     BuildModes.LockedHeight => GridType.Circle,
@@ -154,16 +158,16 @@ namespace RL.CardEditor
         }
         #endregion
 
+        [FormerlySerializedAs("_viewport")]
         [Header("Other")]
-        [SerializeField] EditorViewport Viewport;
-        [SerializeField] CameraController MainCameraController;
+        [SerializeField] EditorViewport viewport;
+        [FormerlySerializedAs("_mainCameraController")] [SerializeField] CameraController mainCameraController;
 
-        [SerializeField] Camera m_Camera;
-        public static Camera Camera => Instance.m_Camera;
+        [SerializeField] private Camera cam;
 
-        [SerializeField] Player m_Player;
-        public static Player Player => Instance.m_Player;
-        EventSystem EventSystem;
+        [SerializeField] Player player;
+        public static Player Player => _instance.player;
+        private EventSystem _eventSystem;
 
         static bool InViewport => EditorViewport.IsStay;
 
@@ -182,56 +186,54 @@ namespace RL.CardEditor
 
         private bool CamCanMove
         {
-            get => MainCameraController.CanMove;
-            set => MainCameraController.CanMove = value;
+            get => mainCameraController.CanMove;
+            set => mainCameraController.CanMove = value;
         }
 
         private bool CamCanScroll
         {
-            get => MainCameraController.CanScroll;
-            set => MainCameraController.CanScroll = value;
+            get => mainCameraController.CanScroll;
+            set => mainCameraController.CanScroll = value;
         }
 
         public void Awake()
         {
-            this.SetInstance(ref Instance, true, false, false);
+            this.SetInstance(ref _instance, true, false, false);
 
-            EventSystem = EventSystem.current;
+            _eventSystem = EventSystem.current;
 
-            m_ToolsButtons.Init();
+            toolsButtons.Init();
 
-            Grids = new(GridCamera);
-            m_Preview = gameObject.AddComponent<LinePreview>();
-            m_Preview.Line = Line;
-            m_Preview.Point = Point;
-            m_Preview.Enabled = true;
+            Grids = new(gridCamera);
+            _preview = gameObject.AddComponent<LinePreview>();
+            _preview.Line = line;
+            _preview.Point = point;
+            _preview.Enabled = true;
 
-            Paths = new(PointPrefab, PathsDropdown);
-            Player.Path = Paths[0];
-            Paths.CurrentChanged.AddListener((path) =>
+            _paths = new(pointPrefab, pathsDropdown);
+            _paths.CurrentChanged.AddListener((path) =>
             {
-                Player.Path = path;
                 if (Player.Moved) Player.Stop();
             });
 
             #region Viewport events
 
-            Viewport.OnLeftClick.AddListener((_) =>
+            viewport.OnLeftClick.AddListener((_) =>
             {
                 if (Mode == Modes.BuildsPath)
-                    Paths.Current.Add(Paths.Current[^1].Time + m_Preview.Lenght, m_Preview.End);
+                    _paths.Current.Add(_paths.Current[^1].Time + _preview.Lenght, _preview.End);
             }); // При нажатии левой клавишой мышки по Editor Viewport создавать новый точку и линию
-            Viewport.OnStay.AddListener((_)
-                => m_Preview.Update()); // Если находится в EditorViewport
-            Viewport.OnEnter.AddListener((_) =>
+            viewport.OnStay.AddListener(_
+                => _preview.Update()); // Если находится в EditorViewport
+            viewport.OnEnter.AddListener(_ =>
             {
-                m_Preview.Enabled = true;
+                _preview.Enabled = true;
                 CamCanMove = true;
                 CamCanScroll = true;
             }); // Если вошёл в viewport
-            Viewport.OnExit.AddListener((_) =>
+            viewport.OnExit.AddListener(_ =>
             {
-                m_Preview.Enabled = false;
+                _preview.Enabled = false;
                 CamCanMove = false;
                 CamCanScroll = false;
             }); // Если вышел из viewport
@@ -245,7 +247,7 @@ namespace RL.CardEditor
         public void Update()
         {
             #region Hotkeys
-            if (EventSystem.currentSelectedGameObject != null) return;
+            if (_eventSystem.currentSelectedGameObject != null) return;
 
             //if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.S)) Save();
             //if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L)) Load();
@@ -253,8 +255,8 @@ namespace RL.CardEditor
             if (Input.GetKeyDown(KeyCode.Delete) || Input.GetKeyDown(KeyCode.Backspace))
                 SelectedPoints.RemoveAll();
 
-            if (Input.GetKeyDown(KeyCode.R) && Paths.Current.Count > 1)
-                Paths.Current.Remove(Paths.Current[^1]);
+            if (Input.GetKeyDown(KeyCode.R) && _paths.Current.Count > 1)
+                _paths.Current.Remove(_paths.Current[^1]);
 
             if (Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.LeftControl))
             {
@@ -267,7 +269,7 @@ namespace RL.CardEditor
 
                 if (Input.GetKeyDown(KeyCode.S))
                 {
-                    GUIUtility.systemCopyBuffer = Paths.Current.Save();
+                    GUIUtility.systemCopyBuffer = _paths.Current.Save();
                     Debug.Log("Path has been saved");
                 }
 
@@ -276,7 +278,7 @@ namespace RL.CardEditor
                     string buffer = GUIUtility.systemCopyBuffer;
                     if (buffer.StartsWith("RLC"))
                     {
-                        Paths.Load(buffer);
+                        _paths.Load(buffer);
                         Debug.Log("Path has been loaded");
                     }
                 }
@@ -285,7 +287,7 @@ namespace RL.CardEditor
             if (Input.GetKeyDown(KeyCode.Space)) // Enter to preview mode
             {
                 if (InPreview) Player.Stop();
-                else Player.Move();
+                else Player.Move(_paths.Current);
             }
             #endregion
         }
@@ -293,12 +295,10 @@ namespace RL.CardEditor
         public async void Close()
         {
             var ans = await Dialog.ShowQuestion("Quit?", "Are you sure you want to exit the card editor?");
-            if (ans)
-            {
-                OnModeChanged = (_) => { };
-
-                SceneLoader.LoadScene(0);
-            }
+            if (!ans) return;
+           
+            OnModeChanged = _ => { };
+            SceneLoader.LoadScene(0);
         }
     }
 }

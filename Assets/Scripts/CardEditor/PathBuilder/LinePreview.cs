@@ -28,7 +28,7 @@ namespace RL.CardEditor
             public float Angle => Mathf.Atan2(End.y - Start.y, End.x - Start.x) * Mathf.Rad2Deg;
             public float Lenght => Vector2.Distance(Start, End);
 
-            public Vector2 Start => Paths.Current[^1].Position;
+            public Vector2 Start => _paths.Current[^1].Position;
             public Vector2 End => MousePos;
 
             private Transform _line;

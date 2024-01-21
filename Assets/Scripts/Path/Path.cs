@@ -2,7 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using System.Runtime.CompilerServices;
+using System.Linq;
+using RL.Math;
+using static UnityEngine.RuleTile.TilingRuleOutput;
 
 namespace RL.Paths
 {
@@ -19,38 +21,34 @@ namespace RL.Paths
         public float Width => .25f;
 
         public SyncPoint Add(IPathPoint point)
-        {
-            throw new NotImplementedException();
-
-            float time = point.Time;
-        }
+            => Add(point.Time, point.Position, point.ControlPoint);
 
         public SyncPoint Add(float time, Vector2 position, Vector2? controlPoint = null)
         {
-            throw new NotImplementedException();
-
-            //if (Count <)
-
-            for (int i = 1; i < Count; i++)
-                if (_points[i - 1].Time <= time && _points[i].Time > time)
-                {
-                    SyncPoint point = new(this, i)
-                    {
-                        Time = time,
-                        Position = position,
-                        ControlPoint = controlPoint ?? Vector2.zero
-                    };
-
-                    _points.Insert(i, point);
-                }
+            int index = GetIndexByTime(time);
+            SyncPoint syncPoint = new(this, index)
+            {
+                Time = time,
+                Position = position,
+                ControlPoint = controlPoint ?? new(0, 0)
+            };
+            _points.Insert(index, syncPoint);
+            return syncPoint;
         }
 
         public IEnumerator<SyncPoint> GetEnumerator() => _points.GetEnumerator();
 
         public int GetIndexByTime(float time)
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < Count - 1; i++)
+                if (_points[i].Time <= time && _points[i + 1].Time > time)
+                    return i;
+
+            return Count;
         }
+
+        public Vector2[] GetPointsPositions()
+            => _points.Select((p) => p.Position).ToArray();
 
         public Vector2? GetPosition(float time)
         {
@@ -63,19 +61,16 @@ namespace RL.Paths
 
                 if (current.Time <= time && next.Time > time)
                 {
-                    Vector2 controlPoint1 = current.ControlPoint;
-                    Vector2 controlPoint2 = next.ControlPoint *= -1;
-
-                    PathPoint[] parts = new Line<SyncPoint>(current, next, 10, controlPoint1, controlPoint2).Parts;
+                    TimePoint[] parts = GetCurve(current, next, 16);
                     int partsCount = parts.Length;
-                    PathPoint currentPart = parts[0];
+                    TimePoint currentPart = parts[0];
 
-                    float localTime = time - _points[i].Time;
+                    float localTime = time - current.Time;
                     for (int j = 1; j < partsCount; j++)
                     {
-                        PathPoint nextPart = parts[i];
+                        TimePoint nextPart = parts[j];
 
-                        if (currentPart.Time <= localTime && next.Time > localTime)
+                        if (currentPart.Time <= localTime && nextPart.Time > localTime)
                         {
                             float t = (localTime - currentPart.Time) / (nextPart.Time - currentPart.Time);
                             return Vector2.Lerp(currentPart.Position, nextPart.Position, t);
@@ -93,15 +88,77 @@ namespace RL.Paths
 
         public IEnumerable<Vector2> GetPositions(Func<float> getTime)
         {
-            throw new NotImplementedException();
+            SyncPoint current = _points[0];
+            int count = _points.Count;
+            float time = getTime();
+
+            for (int i = 1; i < count; i++)
+            {
+                SyncPoint next = _points[i];
+
+                while (next.Time > time)
+                {
+                    int partsCount = 16;
+                    var parts = GetCurve(current, next, partsCount);
+
+                    TimePoint currentPart = parts[0];
+
+                    for (int j = 1; j < partsCount; j++)
+                    {
+                        TimePoint nextPart = parts[j];
+
+                        float cpTime = currentPart.Time;
+                        float npTime = nextPart.Time;
+
+                        float duration = npTime - cpTime;
+
+                        Vector2 cpPosition = currentPart.Position;
+                        Vector2 npPosition = nextPart.Position;
+
+                        while (npTime > (time = getTime()))
+                        {
+                            float t = (time - cpTime - current.Time) / duration;
+                            yield return Vector2.Lerp(cpPosition, npPosition, t);
+                        }
+
+                        currentPart = nextPart;
+                    }
+                }
+
+                current = next;
+            }
+        }
+
+        private TimePoint[] GetCurve(SyncPoint a, SyncPoint b, int count)
+        {
+            Vector2 getCurve(float t) => Maths.GetCurveBy4Point(
+                point1: a.Position,
+                controlPoint1: a.Position + a.MirroredControlPoint,
+                controlPoint2: b.Position + b.ControlPoint,
+                point2: b.Position, t);
+
+            float step = 1f / (count - 1);
+            float lenght = 0;
+
+            var parts = new TimePoint[count];
+            parts[0] = new(lenght, a.Position);
+
+            for (int i = 1; i < count; i++)
+            {
+                var pos = getCurve(step * i);
+                lenght += Vector2.Distance(parts[i - 1].Position, pos);
+                parts[i] = new(lenght, pos);
+            }
+
+            float speed = lenght / (b.Time - a.Time);
+
+            for (int i = 1; i < count; i++)
+                parts[i].Time /= speed;
+
+            return parts;
         }
 
         public void RemoveAt(int index)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool TryGetIndexByTime(float time, out int index)
         {
             throw new NotImplementedException();
         }

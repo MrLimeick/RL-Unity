@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using System;
+using System.Collections;
 using RL.Paths;
-using System.Threading.Tasks;
-using System.Threading;
-using System.IO;
+using UnityEngine;
 
 namespace RL.Game
 {
@@ -12,21 +10,42 @@ namespace RL.Game
     /// </summary>
     public class Player : MonoBehaviour
     {
-        public IReadOnlyPath Path;
-
         private Coroutine MoveHandle;
 
         public bool Moved { get; protected set; } = false;
 
-        public void Move()
+        public SpriteRenderer Sprite;
+
+        public void Hit()
         {
-            if(Path == null)
+            Sprite.color = Color.yellow;
+        }
+
+        private void Update()
+        {
+            Sprite.color = Color.Lerp(Sprite.color, Color.white, Time.deltaTime * 6f);
+        }
+
+        public void Move(IReadOnlyPath path, Func<float> getTime)
+        {
+            if(path == null)
             {
                 Debug.LogError("Player path is null!");
                 return;
             }
 
-            MoveHandle = StartCoroutine(MoveCoroutine());
+            transform.position = Vector2.one;
+            transform.localScale = Vector2.one;
+
+            MoveHandle = StartCoroutine(MoveCoroutine(path, getTime));
+        }
+
+        public void Move(IReadOnlyPath path)
+        {
+            float startTime = Time.time;
+            float getTime() => Time.time - startTime;
+
+            Move(path, getTime);
         }
 
         public void Stop()
@@ -38,10 +57,8 @@ namespace RL.Game
             transform.localScale = Vector2.zero;
         }
 
-        IEnumerator MoveCoroutine()
+        IEnumerator MoveCoroutine(IReadOnlyPath path, Func<float> getTime)
         {
-            IReadOnlyPath path = Path;
-
             if (path.Duration <= 0)
             {
                 Debug.LogError("Длинна пути 0 секунд, движение невозможно.");
@@ -50,26 +67,19 @@ namespace RL.Game
 
             Debug.Log("Начато движение по пути");
             Moved = true;
-            float StartTime = Time.time;
 
-            float localTime = 0;
-            float getTime()
+            foreach (Vector2 pos in path.GetPositions(getTime))
             {
-                localTime = Time.time - StartTime;
-                return localTime;
-            }
-
-            foreach(var pos in path.GetPositions(getTime))
-            {
-                if (localTime < 1) transform.localScale = new(localTime, localTime);
-                else if (path.Duration - localTime < 1)
-                {
-                    float s = path.Duration - localTime;
-                    transform.localScale = new(s, s);
-                }
-                else transform.localScale = Vector3.one;
+                //if (localTime < 1) transform.localScale = new(localTime, localTime);
+                //else if (path.Duration - localTime < 1)
+                //{
+                //    float s = path.Duration - localTime;
+                //    transform.localScale = new(s, s);
+                //}
+                //else transform.localScale = Vector3.one;
 
                 transform.position = pos;
+
                 yield return new WaitForEndOfFrame();
             }
 

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Text;
 using RL.Paths;
 using UnityEngine;
@@ -296,5 +297,8 @@ namespace RL.CardEditor
         public IEnumerator<CardEditorPoint> GetEnumerator() => _points.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public Vector2[] GetPointsPositions()
+            => _points.Select((p) => p.Position).ToArray();
     }
 }

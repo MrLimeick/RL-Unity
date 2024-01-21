@@ -60,27 +60,38 @@
   <ItemGroup>
     <Compile Include="Assets/Scripts/CardEditor/PathBuilder/PathMaker.SelectedPointsList.cs" />
     <Compile Include="Assets/Scripts/MusicManager.cs" />
+    <Compile Include="Assets/Game/Scripts/UI/PauseMenu.cs" />
     <Compile Include="Assets/Scripts/CardEditor/MapInformation/CardData.cs" />
+    <Compile Include="Assets/Scripts/Easing.cs" />
+    <Compile Include="Assets/CardEditor/Scripts/Field.cs" />
     <Compile Include="Assets/Scripts/Path/IControlPoint.cs" />
     <Compile Include="Assets/Scripts/Card.cs" />
     <Compile Include="Assets/Scripts/CardEditor/Menu.cs" />
+    <Compile Include="Assets/Game/Scripts/NoteSettings.cs" />
     <Compile Include="Assets/Scripts/Player.cs" />
     <Compile Include="Assets/Scripts/MainMenu/MainMenu.cs" />
     <Compile Include="Assets/Scripts/Path/Line.cs" />
+    <Compile Include="Assets/Game/Scripts/UI/TimeHpOverlay.cs" />
+    <Compile Include="Assets/Scripts/Animation.cs" />
     <Compile Include="Assets/Scripts/Path/ILine.cs" />
     <Compile Include="Assets/Scripts/Maths.cs" />
     <Compile Include="Assets/Scripts/Path/Point.cs" />
+    <Compile Include="Assets/Game/Scripts/ScoreManager.cs" />
     <Compile Include="Assets/Scripts/Path/ISyncPoint.cs" />
     <Compile Include="Assets/Scripts/CardEditor/MapInformation/TemporaryData.cs" />
     <Compile Include="Assets/Scripts/CardEditor/MapInformation/Audio.cs" />
+    <Compile Include="Assets/CardEditor/Scripts/Vector2Field.cs" />
     <Compile Include="Assets/Scripts/CardEditor/EditorViewport.cs" />
     <Compile Include="Assets/Scripts/CardEditor/PathBuilder/CardEditorCurvePoint.cs" />
     <Compile Include="Assets/Scripts/Path/TimePoint.cs" />
     <Compile Include="Assets/Scripts/UI/FileBrowser.cs" />
     <Compile Include="Assets/Scripts/CardEditor/PathBuilder/CardEditorPath.cs" />
+    <Compile Include="Assets/Game/Scripts/Note.cs" />
     <Compile Include="Assets/Scripts/UI/GridCamera.cs" />
+    <Compile Include="Assets/Game/Scripts/PathRenderer.cs" />
     <Compile Include="Assets/Scripts/UI/SceneLoader.cs" />
     <Compile Include="Assets/Scripts/Path/Path.cs" />
+    <Compile Include="Assets/Scripts/NotesTextures.cs" />
     <Compile Include="Assets/Scripts/Screenshoter.cs" />
     <Compile Include="Assets/Scripts/Path/IPoint.cs" />
     <Compile Include="Assets/Scripts/UI/Message.cs" />
@@ -95,8 +106,11 @@
     <Compile Include="Assets/Scripts/UI/Button.cs" />
     <Compile Include="Assets/Scripts/CardEditor/CameraController.cs" />
     <Compile Include="Assets/Scripts/CardEditor/PathBuilder/GridSettings.cs" />
+    <Compile Include="Assets/Game/Scripts/Game.cs" />
     <Compile Include="Assets/Scripts/Path/IPath.cs" />
+    <Compile Include="Assets/CardEditor/Scripts/GridSettings.cs" />
     <Compile Include="Assets/Scripts/Path/ControlPoint.cs" />
+    <Compile Include="Assets/Game/Scripts/NotesManager.cs" />
     <Compile Include="Assets/Scripts/CardEditor/PathBuilder/PathMaker.cs" />
     <Compile Include="Assets/Scripts/CardEditor/CardEditor.cs" />
     <Compile Include="Assets/Scripts/CardEditor/MapInformation/MapInformation.cs" />
@@ -123,9 +137,12 @@
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader" />
     <None Include="Assets/TextMesh Pro/Resources/LineBreaking Leading Characters.txt" />
     <None Include="Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc" />
+    <None Include="Assets/Libs/osu!beatmaps.dll" />
     <None Include="Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc" />
     <None Include="Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt" />
+    <None Include="Assets/Libs/Newtonsoft.Json.dll" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader" />
+    <None Include="Assets/Game/Materials/Aboba.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF Overlay.shader" />
     <None Include="Assets/Shaders/Invert.shader" />
     <None Include="Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader" />
@@ -387,6 +404,12 @@
     </Reference>
     <Reference Include="Unity.Collections.LowLevel.ILSupport">
       <HintPath>Library/PackageCache/com.unity.collections@1.2.4/Unity.Collections.LowLevel.ILSupport/Unity.Collections.LowLevel.ILSupport.dll</HintPath>
+    </Reference>
+    <Reference Include="osu!beatmaps">
+      <HintPath>Assets/Libs/osu!beatmaps.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Assets/Libs/Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="netstandard">
       <HintPath>/Users/Lime/UnityEditors/2022.3.10f1/Unity.app/Contents/NetStandard/ref/2.1.0/netstandard.dll</HintPath>

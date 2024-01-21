@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Events;
-using System.IO;
 
 namespace RL
 {
@@ -19,10 +15,10 @@ namespace RL
         /// <param name="Clip">Клип полученный из файла</param>
         /// <returns></returns>
         /// <exception cref="System.Exception"></exception>
-        public async static Task<AudioClip> LoadAudio(string Path)
+        public async static Task<AudioClip> LoadAudio(string path)
         {
-            if (!File.Exists(Path)) throw new Exception("Файла, который должен был является музыкой, не существует!");
-            using UnityWebRequest UWR = UnityWebRequestMultimedia.GetAudioClip("file://" + Path, AudioType.UNKNOWN);
+            if (!File.Exists(path)) throw new Exception("Файла, который должен был является музыкой, не существует!");
+            using UnityWebRequest UWR = UnityWebRequestMultimedia.GetAudioClip("file://" + path, AudioType.UNKNOWN);
 
             var a = UWR.SendWebRequest();
             while (!a.isDone) await Task.Yield();

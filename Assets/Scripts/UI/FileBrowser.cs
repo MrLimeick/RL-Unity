@@ -23,9 +23,19 @@ public class FileBrowser : MonoBehaviour
     [SerializeField] private Button FilePrefab;
     [SerializeField] private Button FolderPrefab;
 
+    private DirectoryInfo _nextDirectory;
+
     List<DirectoryInfo> PreviousDirectories;
     private DirectoryInfo PreviousDirectory;
-    private DirectoryInfo NextDirectory;
+    public DirectoryInfo NextDirectory
+    {
+        get => _nextDirectory;
+        private set
+        {
+            _nextDirectory = value;
+            NextButton.interactable = value is not null;
+        }
+    }
     private DirectoryInfo CurrentDirectory;
 
 #if UNITY_STANDALONE_OSX
@@ -34,55 +44,30 @@ public class FileBrowser : MonoBehaviour
     const string Root = "C:/";
 #endif
 
+    [RuntimeInitializeOnLoadMethod]
+    static void Init()
+    {
+        InstanceObject.InstantiatePrefab("FileBrowser");
+    }
+
     void Start()
     {
-        if (Instance != null) Destroy(Instance.gameObject);
-        Instance = this;
+        InstanceObject.SetInstance(this, ref Instance, true);
 
-        PathInputField.onEndEdit.AddListener((path) =>
-        {
-            if (Directory.Exists(path))
-            {
-                DirectoryInfo directory = new(path);
+        PathInputField.onEndEdit.AddListener(SelectDirectory);
+        UpButton.onClick.AddListener(Up);
+        PreviousButton.onClick.AddListener(Previous);
+        NextButton.onClick.AddListener(Next);
 
-                SelectDirectory(directory);
-
-                Debug.Log("Files: " + string.Join(", ", directory.GetFiles().Select((file) => file.Name).ToArray()));
-            }
-            else Debug.LogError("Directory not exist!");
-        });
-
-        UpButton.onClick.AddListener(() =>
-        {
-            if (CurrentDirectory.Parent == null) return;
-
-            DirectoryInfo old = CurrentDirectory;
-            SelectDirectory(CurrentDirectory.Parent);
-            NextDirectory = old;
-            NextButton.interactable = true;
-        });
-
-        PreviousButton.onClick.AddListener(() =>
-        {
-            if (PreviousDirectory == null) return;
-                 
-            DirectoryInfo old = CurrentDirectory;
-            SelectDirectory(PreviousDirectory);
-            NextDirectory = old;
-            NextButton.interactable = true;
-        });
-
-        NextButton.onClick.AddListener(() =>
-        {
-            SelectDirectory(NextDirectory);
-        });
-
-        SelectDirectory(new DirectoryInfo(Root));
+        SelectDirectory(Root);
     }
 
     readonly List<GameObject> _elements = new();
 
-    void SelectDirectory(DirectoryInfo info)
+    public void SelectDirectory(string path)
+        => SelectDirectory(new DirectoryInfo(path));
+
+    public void SelectDirectory(DirectoryInfo info)
     {
         _elements.ForEach((e) => Destroy(e));
         _elements.Clear();
@@ -92,12 +77,35 @@ public class FileBrowser : MonoBehaviour
         PreviousDirectory = CurrentDirectory;
         CurrentDirectory = info;
         NextDirectory = null;
-        NextButton.interactable = false;
 
         if (!info.Exists) throw new DirectoryNotFoundException();
 
         SpawnElements(FolderPrefab, info.GetDirectories(), SelectDirectory, (dis) => !dis.Name.StartsWith('.'));
-        SpawnElements(FilePrefab, info.GetFiles(), SelectFile, (file) => !file.Name.StartsWith('.') || (allowedExtensions != null && !allowedExtensions.Contains(file.Extension ?? "")));
+        SpawnElements(FilePrefab, info.GetFiles(), SelectFile, (file) => !file.Name.StartsWith('.'));
+    }
+
+    public void Up()
+    {
+        if (CurrentDirectory.Parent == null) return;
+
+        DirectoryInfo old = CurrentDirectory;
+        SelectDirectory(CurrentDirectory.Parent);
+        NextDirectory = old;
+    }
+
+    public void Previous()
+    {
+        if (PreviousDirectory == null) return;
+
+        DirectoryInfo old = CurrentDirectory;
+        SelectDirectory(PreviousDirectory);
+        NextDirectory = old;
+        NextButton.interactable = true;
+    }
+
+    public void Next()
+    {
+        SelectDirectory(NextDirectory);
     }
 
     void SpawnElements<T>(Button elementPrefab, T[] values, Action<T> action, Func<T, bool> predicate)
@@ -119,7 +127,6 @@ public class FileBrowser : MonoBehaviour
     }
 
     private static UnityEvent<FileInfo> OnFileSelected = new();
-    private static string[] allowedExtensions;
 
     void SelectFile(FileInfo file)
     {
@@ -182,11 +189,5 @@ public class FileBrowser : MonoBehaviour
     {
         if (_coroutine != null) Instance.StopCoroutine(_coroutine);
         _coroutine = Instance.StartCoroutine(Anim(0.5f, Instance.SetStep, false));
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

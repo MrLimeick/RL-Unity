@@ -29,10 +29,17 @@ namespace RL.UI
         /// </summary>
         public Color GridColor = Color.black;
 
+        
+        private Vector2 resolution = new(.5f, .5f);
+
         /// <summary>
         /// Разрешение квадратной сетки.
         /// </summary>
-        public Vector2 Resolution = new(.5f, .5f);
+        public Vector2 Resolution
+        {
+            get => resolution;
+            set => resolution = new(Mathf.Clamp(value.x, 0.001f, float.MaxValue), Mathf.Clamp(value.y, 0.001f, float.MaxValue));
+        }
 
         /// <summary>
         /// Данная камера.
@@ -47,7 +54,12 @@ namespace RL.UI
         /// <summary>
         /// Радиус круговой сетки.
         /// </summary>
-        public float Radius = 1f;
+        private float radius = 1f;
+        public float Radius
+        {
+            get => radius;
+            set => radius = Mathf.Clamp(value, 0.001f, float.MaxValue);
+        }
 
         //public float Step = Mathf.PI / 36; // TODO: Шаг угла круговой сетки.
 
@@ -138,10 +150,10 @@ namespace RL.UI
                 (x1 > 0) ? x1 : (x2 < 0) ? x2 : 0.5f,
                 (y1 > 0) ? y1 : (y2 < 0) ? y2 : 0.5f), Vector2.zero);
 
-            for (float i = 0; i < count; i += Radius)
-                DrawCircle(Maths.Round(i + dis, Radius), 72, -pos + center); 
+            for (float i = 0; i < count; i += radius)
+                DrawCircle(Maths.Round(i + dis, radius), 72, -pos + center); 
 
-            DrawLines(Maths.Round(count + dis, Radius), 72, -pos + center);
+            DrawLines(Maths.Round(count + dis, radius), 72, -pos + center);
         }
 
         void DrawGrid(Vector2 zero, Vector2 one, Vector2 center, Vector2 pos)
@@ -150,33 +162,33 @@ namespace RL.UI
             Vector2 camSize = one - zero;
 
             float
-                horizontalNum = camSize.x / Resolution.x,
-                offsetX = center.x - (zero.x % Resolution.x),
-                verticalNum = camSize.y / Resolution.y,
-                offsetY = center.y - (zero.y % Resolution.y);
+                horizontalNum = camSize.x / resolution.x,
+                offsetX = center.x - (zero.x % resolution.x),
+                verticalNum = camSize.y / resolution.y,
+                offsetY = center.y - (zero.y % resolution.y);
 
             GL.Begin(GL.LINES);
 
             for (int i = 0; i < horizontalNum; i++) // Draw horizontal lines
             {
-                float x = offsetX + Resolution.x * i;
+                float x = offsetX + resolution.x * i;
 
                 GL.Color(GridColor);
                 GL.Vertex3(x, center.y, 0f);
 
                 GL.Color(GridColor);
-                GL.Vertex3(x, center.y + verticalNum * Resolution.y, 0f);
+                GL.Vertex3(x, center.y + verticalNum * resolution.y, 0f);
             }
 
             for (int i = 0; i < verticalNum; i++) // Draw vertical lines
             {
-                float y = offsetY + Resolution.y * i;
+                float y = offsetY + resolution.y * i;
 
                 GL.Color(GridColor);
                 GL.Vertex3(center.x, y, 0f);
 
                 GL.Color(GridColor);
-                GL.Vertex3(center.x + horizontalNum * Resolution.x, y, 0f);
+                GL.Vertex3(center.x + horizontalNum * resolution.x, y, 0f);
             }
 
             GL.End();
@@ -213,7 +225,7 @@ namespace RL.UI
                 float sin = Mathf.Sin(radian);
 
                 GL.Color(GridColor);
-                GL.Vertex3(pos.x + cos * Radius, pos.y + sin * Radius, 0);
+                GL.Vertex3(pos.x + cos * this.radius, pos.y + sin * this.radius, 0);
 
                 GL.Color(GridColor);
                 GL.Vertex3(cos * radius + pos.x, sin * radius + pos.y, 0f);
